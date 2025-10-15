@@ -1,9 +1,6 @@
 node_modules/
-*.mp3
-*.wav
-*.ogg
-*_visemes.json
 output/
 temp/
 .DS_Store
+*.ogg
 

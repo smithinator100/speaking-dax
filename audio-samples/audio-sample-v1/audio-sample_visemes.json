@@ -1,0 +1,35 @@
+{
+  "metadata": {
+    "soundFile": "/Users/bensmith/Documents/DDG Projects/speaking-dax/lip-sync-libraries/rhubarb/../../audio-samples/audio-sample-v1/audio-sample.wav",
+    "duration": 3.93
+  },
+  "mouthCues": [
+    { "start": 0.00, "end": 0.04, "value": "X" },
+    { "start": 0.04, "end": 0.10, "value": "B" },
+    { "start": 0.10, "end": 0.16, "value": "C" },
+    { "start": 0.16, "end": 0.23, "value": "B" },
+    { "start": 0.23, "end": 0.37, "value": "C" },
+    { "start": 0.37, "end": 0.44, "value": "B" },
+    { "start": 0.44, "end": 0.51, "value": "G" },
+    { "start": 0.51, "end": 0.72, "value": "F" },
+    { "start": 0.72, "end": 0.86, "value": "C" },
+    { "start": 0.86, "end": 0.93, "value": "B" },
+    { "start": 0.93, "end": 1.08, "value": "X" },
+    { "start": 1.08, "end": 1.13, "value": "B" },
+    { "start": 1.13, "end": 1.17, "value": "C" },
+    { "start": 1.17, "end": 1.24, "value": "E" },
+    { "start": 1.24, "end": 1.59, "value": "F" },
+    { "start": 1.59, "end": 1.80, "value": "B" },
+    { "start": 1.80, "end": 2.15, "value": "C" },
+    { "start": 2.15, "end": 2.31, "value": "X" },
+    { "start": 2.31, "end": 2.59, "value": "B" },
+    { "start": 2.59, "end": 2.66, "value": "E" },
+    { "start": 2.66, "end": 2.73, "value": "B" },
+    { "start": 2.73, "end": 2.81, "value": "A" },
+    { "start": 2.81, "end": 2.99, "value": "B" },
+    { "start": 2.99, "end": 3.20, "value": "E" },
+    { "start": 3.20, "end": 3.34, "value": "C" },
+    { "start": 3.34, "end": 3.90, "value": "B" },
+    { "start": 3.90, "end": 3.93, "value": "X" }
+  ]
+}
