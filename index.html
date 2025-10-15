@@ -18,7 +18,6 @@
                 <select id="lipSyncModel">
                     <option value="rhubarb">Rhubarb</option>
                     <option value="gentle">Gentle</option>
-                    <option value="azure">Azure Speech</option>
                 </select>
             </div>
             <div class="select-wrapper">
@@ -76,7 +75,7 @@
             <div class="preview-box">
                 <div class="mouth-container" id="mouthContainer">
                     <!-- For non-transition characters -->
-                    <img id="mouthImage" src="mouth-shapes-dax-transition/X.svg" alt="Mouth Shape" style="display: none;">
+                    <img id="mouthImage" src="" alt="Mouth Shape" style="display: none;">
                     
                     <!-- Embedded SVG for dax-transition character -->
                     <svg id="daxSvg" width="838" height="752" viewBox="0 0 838 752" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; max-height: 100%; display: none;">
@@ -98,9 +97,13 @@
     </div>
 
     <script>
+        // Base path configuration for GitHub Pages
+        const BASE_PATH = window.location.pathname.includes('/speaking-dax/') 
+            ? '/speaking-dax/' 
+            : '/';
+        
         let rhubarbData = null;
         let gentleData = null;
-        let azureData = null;
         let audio = null;
         let animationFrameId = null;
         let isPlaying = false;
@@ -225,7 +228,7 @@
             const character = characterSelect.value;
             if (character === 'dax-transition') {
                 // Set background image for dax-transition
-                mouthContainer.style.backgroundImage = 'url(mouth-shapes-dax-transition/bg.png)';
+                mouthContainer.style.backgroundImage = `url(${BASE_PATH}mouth-shapes-dax-transition/bg.png)`;
                 mouthContainer.style.backgroundSize = 'contain';
                 mouthContainer.style.backgroundPosition = 'center';
                 mouthContainer.style.backgroundRepeat = 'no-repeat';
@@ -250,15 +253,15 @@
             const ext = character === 'dax-transition' ? 'svg' : 'png';
             
             return {
-                'X': `${dir}/X.${ext}`,        // Rest/idle position
-                'A': `${dir}/A.${ext}`,        // Closed lips for P, B, M sounds
-                'B': `${dir}/B.${ext}`,        // Slightly open with clenched teeth - K, S, T, EE sounds
-                'C': `${dir}/C.${ext}`,        // Open mouth - EH (men), AE (bat) sounds
-                'D': `${dir}/D.${ext}`,        // Wide open mouth - AA (father) sound
-                'E': `${dir}/E.${ext}`,        // Slightly rounded - AO (off), ER (bird) sounds
-                'F': `${dir}/F.${ext}`,        // Puckered lips - UW (you), OW (show), W sounds
-                'G': `${dir}/G.${ext}`,        // Upper teeth on lower lip - F, V sounds
-                'H': `${dir}/H.${ext}`         // Tongue raised behind upper teeth - long L sounds
+                'X': `${BASE_PATH}${dir}/X.${ext}`,        // Rest/idle position
+                'A': `${BASE_PATH}${dir}/A.${ext}`,        // Closed lips for P, B, M sounds
+                'B': `${BASE_PATH}${dir}/B.${ext}`,        // Slightly open with clenched teeth - K, S, T, EE sounds
+                'C': `${BASE_PATH}${dir}/C.${ext}`,        // Open mouth - EH (men), AE (bat) sounds
+                'D': `${BASE_PATH}${dir}/D.${ext}`,        // Wide open mouth - AA (father) sound
+                'E': `${BASE_PATH}${dir}/E.${ext}`,        // Slightly rounded - AO (off), ER (bird) sounds
+                'F': `${BASE_PATH}${dir}/F.${ext}`,        // Puckered lips - UW (you), OW (show), W sounds
+                'G': `${BASE_PATH}${dir}/G.${ext}`,        // Upper teeth on lower lip - F, V sounds
+                'H': `${BASE_PATH}${dir}/H.${ext}`         // Tongue raised behind upper teeth - long L sounds
             };
         }
 
@@ -276,45 +279,32 @@
             const config = sampleMap[sample];
             
             return {
-                rhubarb: `audio-samples/${config.dir}/${config.file}_visemes.json`,
-                gentle: `audio-samples/${config.dir}/${config.file}-gentle_visemes.json`,
-                azure: `audio-samples/${config.dir}/${config.file}-azure_visemes.json`,
-                audio: `audio-samples/${config.dir}/${config.file}.mp3`
+                rhubarb: `${BASE_PATH}audio-samples/${config.dir}/${config.file}_visemes.json`,
+                gentle: `${BASE_PATH}audio-samples/${config.dir}/${config.file}-gentle_visemes.json`,
+                audio: `${BASE_PATH}audio-samples/${config.dir}/${config.file}.mp3`
             };
         }
 
-        // Load viseme data for all models
+        // Load viseme data for both models
         async function loadVisemeData() {
             try {
                 const paths = getFilePaths();
+                console.log('Loading viseme data from:', paths);
+                console.log('BASE_PATH:', BASE_PATH);
                 
                 // Load Rhubarb data
                 const rhubarbResponse = await fetch(paths.rhubarb);
-                if (!rhubarbResponse.ok) throw new Error('Failed to load Rhubarb viseme data');
+                if (!rhubarbResponse.ok) throw new Error(`Failed to load Rhubarb viseme data (${rhubarbResponse.status}): ${paths.rhubarb}`);
                 rhubarbData = await rhubarbResponse.json();
                 console.log('Loaded Rhubarb viseme data:', rhubarbData);
                 
                 // Load Gentle data
                 const gentleResponse = await fetch(paths.gentle);
-                if (!gentleResponse.ok) throw new Error('Failed to load Gentle viseme data');
+                if (!gentleResponse.ok) throw new Error(`Failed to load Gentle viseme data (${gentleResponse.status}): ${paths.gentle}`);
                 gentleData = await gentleResponse.json();
                 console.log('Loaded Gentle viseme data:', gentleData);
-                
-                // Load Azure data
-                try {
-                    const azureResponse = await fetch(paths.azure);
-                    if (azureResponse.ok) {
-                        azureData = await azureResponse.json();
-                        console.log('Loaded Azure viseme data:', azureData);
-                    } else {
-                        console.warn('Azure viseme data not available for this sample');
-                        azureData = null;
-                    }
-                } catch (error) {
-                    console.warn('Azure viseme data not available:', error.message);
-                    azureData = null;
-                }
             } catch (error) {
+                console.error('Error loading viseme data:', error);
                 showError('Failed to load viseme data: ' + error.message);
             }
         }
@@ -402,14 +392,7 @@
             
             // Get the selected model's data
             const selectedModel = lipSyncModelSelect.value;
-            let visemeData;
-            if (selectedModel === 'rhubarb') {
-                visemeData = rhubarbData;
-            } else if (selectedModel === 'gentle') {
-                visemeData = gentleData;
-            } else if (selectedModel === 'azure') {
-                visemeData = azureData;
-            }
+            const visemeData = selectedModel === 'rhubarb' ? rhubarbData : gentleData;
 
             if (visemeData) {
                 const cue = visemeData.mouthCues.find(cue => {
@@ -451,12 +434,6 @@
         async function playAudio() {
             if (!rhubarbData || !gentleData) {
                 showError('Viseme data not loaded');
-                return;
-            }
-            
-            // Check if Azure is selected but data not available
-            if (lipSyncModelSelect.value === 'azure' && !azureData) {
-                showError('Azure viseme data not available for this sample');
                 return;
             }
 
@@ -606,9 +583,26 @@
             minDurationValue.textContent = `${minDuration}ms`;
         });
 
-        applyTransitionSpeed(); // Apply initial transition speed
-        updateMouthContainerBackground(); // Set initial background
-        loadVisemeData();
+        // Initialize on page load
+        function initializePage() {
+            applyTransitionSpeed(); // Apply initial transition speed
+            updateMouthContainerBackground(); // Set initial background
+            
+            // Set initial mouth image
+            const character = characterSelect.value;
+            if (character === 'dax-transition') {
+                beakPath.setAttribute('d', daxMouthShapes['X'].beak);
+                daxSvg.style.display = 'block';
+            } else {
+                const visemeToImage = getVisemeToImage();
+                mouthImage.src = visemeToImage['X'];
+                mouthImage.style.display = 'block';
+            }
+            
+            loadVisemeData();
+        }
+        
+        initializePage();
     </script>
 </body>
 </html>
