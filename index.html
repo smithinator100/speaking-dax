@@ -49,16 +49,16 @@
             <div class="slider-wrapper">
                 <label for="transitionSpeed">
                     Transition Speed
-                    <span class="slider-value" id="transitionSpeedValue">150ms</span>
+                    <span class="slider-value" id="transitionSpeedValue">90ms</span>
                 </label>
-                <input type="range" id="transitionSpeed" min="0" max="500" step="10" value="150">
+                <input type="range" id="transitionSpeed" min="0" max="500" step="10" value="90">
             </div>
             <div class="slider-wrapper">
                 <label for="anticipationTime">
                     Anticipation Time
-                    <span class="slider-value" id="anticipationTimeValue">0ms</span>
+                    <span class="slider-value" id="anticipationTimeValue">90ms</span>
                 </label>
-                <input type="range" id="anticipationTime" min="-200" max="200" step="10" value="0">
+                <input type="range" id="anticipationTime" min="-200" max="200" step="10" value="90">
             </div>
             <div class="slider-wrapper">
                 <label for="minDuration">
@@ -112,8 +112,8 @@
 
         // Runtime animation settings
         let playbackRate = 1.0;
-        let transitionSpeed = 150; // ms for dax-transition morphing
-        let anticipationTime = 0; // ms (can be negative for earlier, positive for later)
+        let transitionSpeed = 90; // ms for dax-transition morphing
+        let anticipationTime = 90; // ms (can be negative for earlier, positive for later)
         let minDuration = 0; // ms
 
         const playButton = document.getElementById('playButton');
