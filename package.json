@@ -1,0 +1,34 @@
+{
+  "name": "speaking-dax",
+  "version": "1.0.0",
+  "description": "Convert MP3 audio files to JSON viseme maps using Rhubarb Lip Sync, GentleJS, or Azure Speech",
+  "type": "module",
+  "main": "lip-sync-libraries/rhubarb/mp3-to-viseme.js",
+  "scripts": {
+    "convert": "node lip-sync-libraries/rhubarb/mp3-to-viseme.js",
+    "convert:gentle": "node lip-sync-libraries/gentle/gentle-to-viseme.js",
+    "convert:azure": "node lip-sync-libraries/azure/azure-to-viseme.js",
+    "test": "node lip-sync-libraries/rhubarb/mp3-to-viseme.js"
+  },
+  "keywords": [
+    "rhubarb",
+    "gentle",
+    "azure",
+    "lip-sync",
+    "viseme",
+    "animation",
+    "audio",
+    "speech",
+    "forced-aligner",
+    "text-to-speech"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "microsoft-cognitiveservices-speech-sdk": "^1.40.0"
+  }
+}
+

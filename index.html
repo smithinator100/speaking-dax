@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speaking DAX - Lip Sync Test</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Shrikhand&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/flubber@0.4.2"></script>
+</head>
+<body>
+    <div class="settings">
+        <div class="settings-panel">
+            <div class="select-wrapper">
+                <label for="lipSyncModel">Lip Sync Model</label>
+                <select id="lipSyncModel">
+                    <option value="rhubarb">Rhubarb</option>
+                    <option value="gentle">Gentle</option>
+                    <option value="azure">Azure Speech</option>
+                </select>
+            </div>
+            <div class="select-wrapper">
+                <label for="audioSample">Audio Sample</label>
+                <select id="audioSample">
+                    <option value="v2">Sample V2</option>
+                    <option value="v3">Sample V3</option>
+                    <option value="v1">Sample V1</option>
+                </select>
+            </div>
+            <div class="select-wrapper">
+                <label for="character">Character</label>
+                <select id="character">
+                    <option value="barry">Barry</option>
+                    <option value="dax">Dax</option>
+                    <option value="dax-transition" selected>Dax Transition</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="settings-panel">
+            <div class="slider-wrapper">
+                <label for="playbackRate">
+                    Playback Rate
+                    <span class="slider-value" id="playbackRateValue">1.0x</span>
+                </label>
+                <input type="range" id="playbackRate" min="0.5" max="2.0" step="0.1" value="1.0">
+            </div>
+            <div class="slider-wrapper">
+                <label for="transitionSpeed">
+                    Transition Speed
+                    <span class="slider-value" id="transitionSpeedValue">150ms</span>
+                </label>
+                <input type="range" id="transitionSpeed" min="0" max="500" step="10" value="150">
+            </div>
+            <div class="slider-wrapper">
+                <label for="anticipationTime">
+                    Anticipation Time
+                    <span class="slider-value" id="anticipationTimeValue">0ms</span>
+                </label>
+                <input type="range" id="anticipationTime" min="-200" max="200" step="10" value="0">
+            </div>
+            <div class="slider-wrapper">
+                <label for="minDuration">
+                    Min Duration
+                    <span class="slider-value" id="minDurationValue">0ms</span>
+                </label>
+                <input type="range" id="minDuration" min="0" max="200" step="10" value="0">
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="preview-grid">
+            <div class="preview-box">
+                <div class="mouth-container" id="mouthContainer">
+                    <!-- For non-transition characters -->
+                    <img id="mouthImage" src="mouth-shapes-dax-transition/X.svg" alt="Mouth Shape" style="display: none;">
+                    
+                    <!-- Embedded SVG for dax-transition character -->
+                    <svg id="daxSvg" width="838" height="752" viewBox="0 0 838 752" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width: 100%; max-height: 100%; display: none;">
+                        <g id="mouth-group">
+                            <path id="beak-path" d="M464.5 365C439.04 366.426 380.5 355.5 380.5 395.499C380.5 415.499 392.5 429.485 430 435C488.441 443.594 556.857 415 566 383C568 376 524.954 396.596 508.5 400C479.5 406 434.5 406.041 434.5 403C434.5 399.5 477.283 405.234 515 393.5C537.5 386.5 583 370.999 574 349.5C568.767 337 530.5 361.303 464.5 365Z" fill="#FFCC33"/>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="play-button" id="playButton">
+                ▶ Play Audio
+            </button>
+        </div>
+
+        <div id="errorDisplay"></div>
+    </div>
+
+    <script>
+        let rhubarbData = null;
+        let gentleData = null;
+        let azureData = null;
+        let audio = null;
+        let animationFrameId = null;
+        let isPlaying = false;
+        let lastViseme = 'X';
+        let currentMorphAnimation = null;
+
+        // Runtime animation settings
+        let playbackRate = 1.0;
+        let transitionSpeed = 150; // ms for dax-transition morphing
+        let anticipationTime = 0; // ms (can be negative for earlier, positive for later)
+        let minDuration = 0; // ms
+
+        const playButton = document.getElementById('playButton');
+        const errorDisplay = document.getElementById('errorDisplay');
+        const mouthImage = document.getElementById('mouthImage');
+        const mouthContainer = document.getElementById('mouthContainer');
+        const lipSyncModelSelect = document.getElementById('lipSyncModel');
+        const audioSampleSelect = document.getElementById('audioSample');
+        const characterSelect = document.getElementById('character');
+        const daxSvg = document.getElementById('daxSvg');
+        const beakPath = document.getElementById('beak-path');
+
+        // Slider elements
+        const playbackRateSlider = document.getElementById('playbackRate');
+        const playbackRateValue = document.getElementById('playbackRateValue');
+        const transitionSpeedSlider = document.getElementById('transitionSpeed');
+        const transitionSpeedValue = document.getElementById('transitionSpeedValue');
+        const anticipationTimeSlider = document.getElementById('anticipationTime');
+        const anticipationTimeValue = document.getElementById('anticipationTimeValue');
+        const minDurationSlider = document.getElementById('minDuration');
+        const minDurationValue = document.getElementById('minDurationValue');
+
+        // Dax Transition mouth shape paths
+        const daxMouthShapes = {
+            'X': {
+                beak: "M464.5 365C439.04 366.426 380.5 355.5 380.5 395.499C380.5 415.499 392.5 429.485 430 435C488.441 443.594 556.857 415 566 383C568 376 524.954 396.596 508.5 400C479.5 406 434.5 406.041 434.5 403C434.5 399.5 477.283 405.234 515 393.5C537.5 386.5 583 370.999 574 349.5C568.767 337 530.5 361.303 464.5 365Z"
+            },
+            'A': {
+                beak: "M463.91 365.304C438.45 366.73 379.91 355.804 379.91 395.803C379.91 415.803 391.91 429.789 429.41 435.304C487.851 443.898 556.91 411.254 556.91 389.804C556.91 384.804 526.364 399.899 509.91 403.304C480.91 409.304 453.41 412.345 453.41 409.304C453.41 405.804 478.693 409.038 516.41 397.304C538.91 390.304 568.91 383.804 559.91 362.304C553.252 346.4 526.41 361.804 463.91 365.304Z"
+            },
+            'B': {
+                beak: "M437 366.5C415.018 365.164 381.5 373.5 381.5 395C381.5 415 401.69 424.27 422 433C479 457.5 563.437 433 554.5 413.5C551.75 407.5 527.765 413.867 511 415C474 417.5 427.15 412.7 434 399C438.462 390.077 479.188 399.842 518 392.5C536.5 389 579.303 374.926 574 350C571.07 336.228 527.5 372 437 366.5Z"
+            },
+            'C': {
+                beak: "M382.69 392.713C385.048 382.461 396.03 363.143 435.247 363.612C455.074 363.53 479.702 363.604 496.03 361.749C520.298 358.992 538.311 353.122 550.315 348.547C567.291 342.07 573.315 343.515 575.428 347.39C577.749 351.648 575.014 359.001 569.082 365.769C557.752 378.698 537.383 388.716 501.408 391.689C465.434 394.662 441.601 385.012 431.342 400.723C426.918 407.499 430.338 423.47 465.128 428.499C512.139 435.283 550.748 420.323 555.519 429.358C560.29 438.393 532.809 456.776 485.722 457.161C438.635 457.545 409.224 440.674 398.794 432.288C385.561 421.648 379.639 406.131 382.69 392.713Z"
+            },
+            'D': {
+                beak: "M427 366.5C419 366.5 386.5 366.5 381 401C372.823 452.294 438 476.5 490.5 476.5C517.703 476.5 561.192 463.5 554.5 449C547.807 434.5 427 473 427 413C427 386.765 462.386 394 502 394C534 394 583.45 369.5 574 348.5C569.5 338.5 531.689 359.441 504 363C474.144 366.837 457.101 366.5 427 366.5Z"
+            },
+            'E': {
+                beak: "M382.69 392.713C385.048 382.461 396.283 357.031 435.5 357.5C455.327 357.418 479.702 363.604 496.03 361.749C520.298 358.993 522.884 358.233 534.887 353.657C551.863 347.181 557.888 348.625 560 352.5C562.321 356.758 559.586 364.111 553.654 370.879C542.324 383.808 532.004 387.527 496.03 390.5C460.055 393.473 445.759 382.289 435.5 398C431.075 404.776 430.71 421.971 465.5 427C512.511 433.785 542.229 419.465 547 428.5C551.771 437.535 527.587 455.615 480.5 456C433.413 456.385 409.224 440.675 398.794 432.289C385.561 421.649 379.639 406.132 382.69 392.713Z"
+            },
+            'F': {
+                beak: "M493 361.5C458.5 360 387 352.001 382.5 398.001C379.86 424.987 405.5 440.501 440 448.001C479.041 456.488 530.189 442.322 557 417C566 408.5 557 405 543.5 408.5C526.505 412.907 520.632 401.5 520 395.5C519 386 527.034 382.793 540 376C550.5 370.5 556.829 351.814 543.5 355.5C520 362 504.489 362 493 361.5Z"
+            },
+            'G': {
+                beak: "M482 364.5C456.632 367.092 379.5 355 378 398.5C377.311 418.488 383.839 441.22 421.5 445.5C465.5 450.5 520.857 426 530 394C532 387 479.954 390.096 463.5 393.5C434.5 399.5 433.5 400.5 433.5 397.5C433.5 394 496.914 385.727 515 387.5C540.5 390 578.261 376.696 574 349C572 335.999 550.5 357.5 482 364.5Z"
+            },
+            'H': {
+                beak: "M437 366.5C415.018 365.164 381.5 373.5 381.5 395C381.5 415 401.69 424.27 422 433C479 457.5 563.437 433 554.5 413.5C551.75 407.5 527.765 413.867 511 415C474 417.5 427.15 412.7 434 399C438.462 390.077 479.188 399.842 518 392.5C536.5 389 579.303 374.926 574 350C571.07 336.228 527.5 372 437 366.5Z"
+            }
+        };
+
+        // Get mouth shapes directory based on character selection
+        function getMouthShapesDir() {
+            const character = characterSelect.value;
+            if (character === 'dax') return 'mouth-shapes-dax';
+            if (character === 'dax-transition') return 'mouth-shapes-dax-transition';
+            return 'mouth-shapes-v2';
+        }
+
+        // Morph SVG beak to new shape
+        function morphBeak(fromShape, toShape, duration = transitionSpeed) {
+            const character = characterSelect.value;
+            if (character !== 'dax-transition') return;
+
+            const fromPath = daxMouthShapes[fromShape]?.beak;
+            const toPath = daxMouthShapes[toShape]?.beak;
+            
+            if (!fromPath || !toPath || fromPath === toPath) return;
+
+            // Cancel any existing animation
+            if (currentMorphAnimation) {
+                cancelAnimationFrame(currentMorphAnimation);
+                currentMorphAnimation = null;
+            }
+
+            try {
+                // Create interpolator using Flubber
+                const interpolator = flubber.interpolate(fromPath, toPath);
+                
+                const startTime = performance.now();
+                
+                function animate(currentTime) {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    // Ease-in-out function for smoother animation
+                    const eased = progress < 0.5
+                        ? 2 * progress * progress
+                        : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+                    
+                    beakPath.setAttribute('d', interpolator(eased));
+                    
+                    if (progress < 1) {
+                        currentMorphAnimation = requestAnimationFrame(animate);
+                    } else {
+                        currentMorphAnimation = null;
+                    }
+                }
+                
+                currentMorphAnimation = requestAnimationFrame(animate);
+            } catch (error) {
+                console.error('Morph error:', error);
+                // Fallback to instant change
+                beakPath.setAttribute('d', toPath);
+            }
+        }
+
+        // Update mouth container background based on character selection
+        function updateMouthContainerBackground() {
+            const character = characterSelect.value;
+            if (character === 'dax-transition') {
+                // Set background image for dax-transition
+                mouthContainer.style.backgroundImage = 'url(mouth-shapes-dax-transition/bg.png)';
+                mouthContainer.style.backgroundSize = 'contain';
+                mouthContainer.style.backgroundPosition = 'center';
+                mouthContainer.style.backgroundRepeat = 'no-repeat';
+                // Show SVG, hide img
+                daxSvg.style.display = 'block';
+                mouthImage.style.display = 'none';
+            } else {
+                // Remove background for other characters
+                mouthContainer.style.backgroundImage = 'none';
+                // Show img, hide SVG
+                daxSvg.style.display = 'none';
+                mouthImage.style.display = 'block';
+                mouthImage.style.position = '';
+                mouthImage.style.zIndex = '';
+            }
+        }
+
+        // Get mapping of Rhubarb viseme codes to mouth shape images
+        function getVisemeToImage() {
+            const dir = getMouthShapesDir();
+            const character = characterSelect.value;
+            const ext = character === 'dax-transition' ? 'svg' : 'png';
+            
+            return {
+                'X': `${dir}/X.${ext}`,        // Rest/idle position
+                'A': `${dir}/A.${ext}`,        // Closed lips for P, B, M sounds
+                'B': `${dir}/B.${ext}`,        // Slightly open with clenched teeth - K, S, T, EE sounds
+                'C': `${dir}/C.${ext}`,        // Open mouth - EH (men), AE (bat) sounds
+                'D': `${dir}/D.${ext}`,        // Wide open mouth - AA (father) sound
+                'E': `${dir}/E.${ext}`,        // Slightly rounded - AO (off), ER (bird) sounds
+                'F': `${dir}/F.${ext}`,        // Puckered lips - UW (you), OW (show), W sounds
+                'G': `${dir}/G.${ext}`,        // Upper teeth on lower lip - F, V sounds
+                'H': `${dir}/H.${ext}`         // Tongue raised behind upper teeth - long L sounds
+            };
+        }
+
+        // Get current file paths based on selections
+        function getFilePaths() {
+            const sample = audioSampleSelect.value;
+            
+            // Map sample values to actual directory and file names
+            const sampleMap = {
+                'v1': { dir: 'audio-sample-v1', file: 'audio-sample' },
+                'v2': { dir: 'audio-sample-v2', file: 'audio-sample-v2' },
+                'v3': { dir: 'audio-sample-v3', file: 'audio-sample-v3' }
+            };
+            
+            const config = sampleMap[sample];
+            
+            return {
+                rhubarb: `audio-samples/${config.dir}/${config.file}_visemes.json`,
+                gentle: `audio-samples/${config.dir}/${config.file}-gentle_visemes.json`,
+                azure: `audio-samples/${config.dir}/${config.file}-azure_visemes.json`,
+                audio: `audio-samples/${config.dir}/${config.file}.mp3`
+            };
+        }
+
+        // Load viseme data for all models
+        async function loadVisemeData() {
+            try {
+                const paths = getFilePaths();
+                
+                // Load Rhubarb data
+                const rhubarbResponse = await fetch(paths.rhubarb);
+                if (!rhubarbResponse.ok) throw new Error('Failed to load Rhubarb viseme data');
+                rhubarbData = await rhubarbResponse.json();
+                console.log('Loaded Rhubarb viseme data:', rhubarbData);
+                
+                // Load Gentle data
+                const gentleResponse = await fetch(paths.gentle);
+                if (!gentleResponse.ok) throw new Error('Failed to load Gentle viseme data');
+                gentleData = await gentleResponse.json();
+                console.log('Loaded Gentle viseme data:', gentleData);
+                
+                // Load Azure data
+                try {
+                    const azureResponse = await fetch(paths.azure);
+                    if (azureResponse.ok) {
+                        azureData = await azureResponse.json();
+                        console.log('Loaded Azure viseme data:', azureData);
+                    } else {
+                        console.warn('Azure viseme data not available for this sample');
+                        azureData = null;
+                    }
+                } catch (error) {
+                    console.warn('Azure viseme data not available:', error.message);
+                    azureData = null;
+                }
+            } catch (error) {
+                showError('Failed to load viseme data: ' + error.message);
+            }
+        }
+
+        // Initialize audio
+        function initAudio() {
+            const paths = getFilePaths();
+            audio = new Audio();
+            audio.preload = 'auto';
+            audio.crossOrigin = 'anonymous';
+            audio.playbackRate = playbackRate;
+            
+            // Set source
+            audio.src = paths.audio;
+            
+            audio.addEventListener('ended', () => {
+                stopAnimation();
+            });
+
+            audio.addEventListener('error', (e) => {
+                console.error('Audio error:', e);
+                console.error('Audio error code:', audio.error?.code, audio.error?.message);
+                const errorMessages = {
+                    1: 'Audio loading aborted',
+                    2: 'Network error while loading audio',
+                    3: 'Audio decode error - format may not be supported',
+                    4: 'Audio source not supported or not found'
+                };
+                const msg = errorMessages[audio.error?.code] || 'Failed to load audio file';
+                showError(`${msg}. Path: ${paths.audio}`);
+                stopAnimation();
+            });
+
+            audio.addEventListener('canplaythrough', () => {
+                console.log('Audio ready to play:', paths.audio);
+            });
+
+            audio.addEventListener('loadedmetadata', () => {
+                console.log('Audio metadata loaded. Duration:', audio.duration);
+            });
+        }
+
+        // Apply transition speed to mouth image
+        function applyTransitionSpeed() {
+            const transitionStyle = transitionSpeed > 0 ? `all ${transitionSpeed}ms ease-in-out` : 'none';
+            mouthImage.style.transition = transitionStyle;
+        }
+
+        // Reload data when selections change
+        async function reloadData() {
+            // Stop current playback
+            if (isPlaying) {
+                stopAnimation();
+            }
+            
+            // Clean up existing audio
+            if (audio) {
+                audio.pause();
+                audio = null;
+            }
+            
+            // Update mouth container background for character
+            updateMouthContainerBackground();
+            
+            // Reload viseme data
+            await loadVisemeData();
+            
+            // Reset mouth to neutral
+            const character = characterSelect.value;
+            if (character === 'dax-transition') {
+                // Reset SVG to X shape
+                beakPath.setAttribute('d', daxMouthShapes['X'].beak);
+            } else {
+                const visemeToImage = getVisemeToImage();
+                mouthImage.src = visemeToImage['X'];
+            }
+            lastViseme = 'X';
+        }
+
+        // Update mouth shapes based on current time
+        function updateMouthShapes(currentTime) {
+            // Apply anticipation time offset (convert ms to seconds)
+            const adjustedTime = currentTime + (anticipationTime / 1000);
+            const character = characterSelect.value;
+            
+            // Get the selected model's data
+            const selectedModel = lipSyncModelSelect.value;
+            let visemeData;
+            if (selectedModel === 'rhubarb') {
+                visemeData = rhubarbData;
+            } else if (selectedModel === 'gentle') {
+                visemeData = gentleData;
+            } else if (selectedModel === 'azure') {
+                visemeData = azureData;
+            }
+
+            if (visemeData) {
+                const cue = visemeData.mouthCues.find(cue => {
+                    // Apply minimum duration filter
+                    const duration = (cue.end - cue.start) * 1000; // convert to ms
+                    if (duration < minDuration) return false;
+                    
+                    return adjustedTime >= cue.start && adjustedTime < cue.end;
+                });
+
+                if (cue) {
+                    const newViseme = cue.value || 'X';
+                    
+                    if (newViseme !== lastViseme) {
+                        if (character === 'dax-transition') {
+                            // Use morphing for dax-transition
+                            morphBeak(lastViseme, newViseme);
+                        } else {
+                            // Use image switching for other characters
+                            const visemeToImage = getVisemeToImage();
+                            const imagePath = visemeToImage[newViseme] || visemeToImage['X'];
+                            mouthImage.src = imagePath;
+                        }
+                        lastViseme = newViseme;
+                    }
+                }
+            }
+        }
+
+        // Animation loop
+        function animate() {
+            if (audio && isPlaying) {
+                updateMouthShapes(audio.currentTime);
+                animationFrameId = requestAnimationFrame(animate);
+            }
+        }
+
+        // Play audio and start animation
+        async function playAudio() {
+            if (!rhubarbData || !gentleData) {
+                showError('Viseme data not loaded');
+                return;
+            }
+            
+            // Check if Azure is selected but data not available
+            if (lipSyncModelSelect.value === 'azure' && !azureData) {
+                showError('Azure viseme data not available for this sample');
+                return;
+            }
+
+            if (!audio) {
+                initAudio();
+            }
+
+            try {
+                console.log('Attempting to play audio...');
+                console.log('Audio ready state:', audio.readyState);
+                console.log('Audio source:', audio.src);
+                
+                // Wait for audio to be ready
+                if (audio.readyState < 2) {
+                    console.log('Waiting for audio to load...');
+                    await new Promise((resolve, reject) => {
+                        const timeout = setTimeout(() => {
+                            reject(new Error('Audio loading timeout'));
+                        }, 10000);
+                        
+                        audio.addEventListener('canplay', () => {
+                            clearTimeout(timeout);
+                            resolve();
+                        }, { once: true });
+                        
+                        audio.load(); // Force load
+                    });
+                }
+                
+                isPlaying = true;
+                playButton.textContent = '⏸ Pause';
+                playButton.disabled = false;
+                
+                await audio.play();
+                console.log('Audio playing successfully');
+                animate();
+            } catch (error) {
+                console.error('Play error:', error);
+                showError('Failed to play audio: ' + error.message);
+                stopAnimation();
+            }
+        }
+
+        // Pause audio and animation
+        function pauseAudio() {
+            if (audio) {
+                audio.pause();
+            }
+            isPlaying = false;
+            playButton.textContent = '▶ Resume';
+            
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+        }
+
+        // Stop animation and reset
+        function stopAnimation() {
+            isPlaying = false;
+            playButton.textContent = '▶ Play Audio';
+            
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+
+            if (currentMorphAnimation) {
+                cancelAnimationFrame(currentMorphAnimation);
+                currentMorphAnimation = null;
+            }
+
+            // Reset mouth to neutral
+            const character = characterSelect.value;
+            if (character === 'dax-transition') {
+                beakPath.setAttribute('d', daxMouthShapes['X'].beak);
+            } else {
+                const visemeToImage = getVisemeToImage();
+                mouthImage.src = visemeToImage['X'];
+            }
+            lastViseme = 'X';
+        }
+
+        // Toggle play/pause
+        function togglePlay() {
+            if (isPlaying) {
+                pauseAudio();
+            } else {
+                if (audio && audio.currentTime > 0 && !audio.ended) {
+                    playAudio();
+                } else {
+                    // Start from beginning
+                    if (audio) {
+                        audio.currentTime = 0;
+                    }
+                    playAudio();
+                }
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            errorDisplay.innerHTML = `<div class="error">⚠️ ${message}</div>`;
+            setTimeout(() => {
+                errorDisplay.innerHTML = '';
+            }, 5000);
+        }
+
+        // Initialize
+        playButton.addEventListener('click', togglePlay);
+        lipSyncModelSelect.addEventListener('change', () => {
+            // When switching models, just reset the mouth if playing
+            if (isPlaying && audio) {
+                const character = characterSelect.value;
+                if (character === 'dax-transition') {
+                    beakPath.setAttribute('d', daxMouthShapes['X'].beak);
+                } else {
+                    const visemeToImage = getVisemeToImage();
+                    mouthImage.src = visemeToImage['X'];
+                }
+                lastViseme = 'X';
+            }
+        });
+        audioSampleSelect.addEventListener('change', reloadData);
+        characterSelect.addEventListener('change', reloadData);
+
+        // Slider event listeners
+        playbackRateSlider.addEventListener('input', (e) => {
+            playbackRate = parseFloat(e.target.value);
+            playbackRateValue.textContent = `${playbackRate.toFixed(1)}x`;
+            if (audio) {
+                audio.playbackRate = playbackRate;
+            }
+        });
+
+        transitionSpeedSlider.addEventListener('input', (e) => {
+            transitionSpeed = parseInt(e.target.value);
+            transitionSpeedValue.textContent = `${transitionSpeed}ms`;
+            applyTransitionSpeed();
+        });
+
+        anticipationTimeSlider.addEventListener('input', (e) => {
+            anticipationTime = parseInt(e.target.value);
+            anticipationTimeValue.textContent = `${anticipationTime}ms`;
+        });
+
+        minDurationSlider.addEventListener('input', (e) => {
+            minDuration = parseInt(e.target.value);
+            minDurationValue.textContent = `${minDuration}ms`;
+        });
+
+        applyTransitionSpeed(); // Apply initial transition speed
+        updateMouthContainerBackground(); // Set initial background
+        loadVisemeData();
+    </script>
+</body>
+</html>
+

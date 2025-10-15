@@ -1,0 +1,32 @@
+{
+  "metadata": {
+    "soundFile": "/Users/bensmith/Documents/DDG Projects/speaking-dax/audio-samples/audio-sample-v1/audio-sample_temp.wav",
+    "duration": 3.93
+  },
+  "mouthCues": [
+    { "start": 0.00, "end": 0.07, "value": "X" },
+    { "start": 0.07, "end": 0.16, "value": "C" },
+    { "start": 0.16, "end": 0.30, "value": "B" },
+    { "start": 0.30, "end": 0.37, "value": "C" },
+    { "start": 0.37, "end": 0.44, "value": "B" },
+    { "start": 0.44, "end": 0.51, "value": "G" },
+    { "start": 0.51, "end": 0.58, "value": "B" },
+    { "start": 0.58, "end": 0.72, "value": "F" },
+    { "start": 0.72, "end": 0.86, "value": "C" },
+    { "start": 0.86, "end": 1.11, "value": "B" },
+    { "start": 1.11, "end": 1.21, "value": "C" },
+    { "start": 1.21, "end": 1.63, "value": "F" },
+    { "start": 1.63, "end": 1.84, "value": "B" },
+    { "start": 1.84, "end": 2.05, "value": "C" },
+    { "start": 2.05, "end": 2.12, "value": "B" },
+    { "start": 2.12, "end": 2.34, "value": "X" },
+    { "start": 2.34, "end": 2.55, "value": "B" },
+    { "start": 2.55, "end": 2.69, "value": "E" },
+    { "start": 2.69, "end": 2.76, "value": "B" },
+    { "start": 2.76, "end": 2.84, "value": "A" },
+    { "start": 2.84, "end": 3.17, "value": "B" },
+    { "start": 3.17, "end": 3.24, "value": "C" },
+    { "start": 3.24, "end": 3.87, "value": "B" },
+    { "start": 3.87, "end": 3.93, "value": "X" }
+  ]
+}

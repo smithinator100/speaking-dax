@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+        .value-display {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 18px;
+        }
+        .status {
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+        .working {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .not-working {
+            background: #ffebee;
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <h1>Settings Controls Test</h1>
+    <p>This page tests if the slider controls are working properly.</p>
+
+    <div class="test-section">
+        <h3>Test 1: Playback Speed</h3>
+        <input type="range" id="testPlayback" min="0.5" max="2" step="0.1" value="1">
+        <div class="value-display" id="testPlaybackValue">1.0x</div>
+        <div class="status" id="testPlaybackStatus">Waiting for input...</div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 2: Transition Speed</h3>
+        <input type="range" id="testTransition" min="0" max="200" step="10" value="0">
+        <div class="value-display" id="testTransitionValue">0ms</div>
+        <div class="status" id="testTransitionStatus">Waiting for input...</div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 3: Visual Effect</h3>
+        <p>Adjust the transition slider above and watch this box:</p>
+        <div id="testBox" style="width: 100px; height: 100px; background: #667eea; border-radius: 8px; transition: none;"></div>
+        <button onclick="changeColor()">Change Color</button>
+    </div>
+
+    <div class="test-section">
+        <h3>Console Output</h3>
+        <div id="consoleOutput" style="background: #000; color: #0f0; padding: 10px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;"></div>
+    </div>
+
+    <script>
+        let currentColor = 0;
+        const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe'];
+        
+        function log(message) {
+            const output = document.getElementById('consoleOutput');
+            const time = new Date().toLocaleTimeString();
+            output.innerHTML += `[${time}] ${message}<br>`;
+            output.scrollTop = output.scrollHeight;
+            console.log(message);
+        }
+
+        function changeColor() {
+            currentColor = (currentColor + 1) % colors.length;
+            document.getElementById('testBox').style.background = colors[currentColor];
+            log('Color changed to: ' + colors[currentColor]);
+        }
+
+        // Test 1: Playback Speed
+        const testPlayback = document.getElementById('testPlayback');
+        const testPlaybackValue = document.getElementById('testPlaybackValue');
+        const testPlaybackStatus = document.getElementById('testPlaybackStatus');
+
+        testPlayback.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            testPlaybackValue.textContent = `${value.toFixed(1)}x`;
+            testPlaybackStatus.textContent = `✓ Working! Value: ${value}`;
+            testPlaybackStatus.className = 'status working';
+            log(`Playback speed changed to: ${value}`);
+        });
+
+        // Test 2: Transition Speed
+        const testTransition = document.getElementById('testTransition');
+        const testTransitionValue = document.getElementById('testTransitionValue');
+        const testTransitionStatus = document.getElementById('testTransitionStatus');
+        const testBox = document.getElementById('testBox');
+
+        testTransition.addEventListener('input', (e) => {
+            const value = parseInt(e.target.value);
+            testTransitionValue.textContent = `${value}ms`;
+            testTransitionStatus.textContent = `✓ Working! Value: ${value}ms`;
+            testTransitionStatus.className = 'status working';
+            
+            // Apply transition to test box
+            testBox.style.transition = value > 0 ? `all ${value}ms ease-in-out` : 'none';
+            
+            log(`Transition speed changed to: ${value}ms`);
+        });
+
+        log('Test page loaded successfully');
+        log('Try moving the sliders above');
+    </script>
+</body>
+</html>
+
