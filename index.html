@@ -55,9 +55,9 @@
             <div class="slider-wrapper">
                 <label for="anticipationTime">
                     Anticipation Time
-                    <span class="slider-value" id="anticipationTimeValue">10ms</span>
+                    <span class="slider-value" id="anticipationTimeValue">-20ms</span>
                 </label>
-                <input type="range" id="anticipationTime" min="-200" max="200" step="10" value="10">
+                <input type="range" id="anticipationTime" min="-200" max="200" step="10" value="-20">
             </div>
             <div class="slider-wrapper">
                 <label for="minDuration">
@@ -142,8 +142,8 @@
 
         // Runtime animation settings
         let playbackRate = 1.0;
-        let transitionSpeed = 50; // ms for dax-transition morphing (default for hybrid)
-        let anticipationTime = 10; // ms (negative = earlier, positive = later, default for hybrid)
+        let transitionSpeed = 50; // ms for dax-transition morphing
+        let anticipationTime = -20; // ms (negative = earlier, positive = later)
         let minDuration = 0; // ms
         
         // Optimal settings for different models
