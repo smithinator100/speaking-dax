@@ -1,0 +1,451 @@
+{
+  "metadata": {
+    "soundFile": "audio-sample-v2.mp3",
+    "duration": 12.167,
+    "transcript": "Billy's purple penguin quickly chewed gooey blueberries while shouting, yepy! Under the moonlight. Before whispering, shhh. Owls zoom by.",
+    "language": "en",
+    "source": "whisperx"
+  },
+  "mouthCues": [
+    {
+      "start": 0,
+      "end": 0.031,
+      "value": "X"
+    },
+    {
+      "start": 0.031,
+      "end": 0.212,
+      "value": "A"
+    },
+    {
+      "start": 0.212,
+      "end": 0.252,
+      "value": "B"
+    },
+    {
+      "start": 0.252,
+      "end": 0.393,
+      "value": "H"
+    },
+    {
+      "start": 0.393,
+      "end": 0.433,
+      "value": "B"
+    },
+    {
+      "start": 0.453,
+      "end": 0.513,
+      "value": "B"
+    },
+    {
+      "start": 0.513,
+      "end": 0.574,
+      "value": "X"
+    },
+    {
+      "start": 0.574,
+      "end": 0.674,
+      "value": "A"
+    },
+    {
+      "start": 0.694,
+      "end": 0.754,
+      "value": "B"
+    },
+    {
+      "start": 0.754,
+      "end": 0.835,
+      "value": "A"
+    },
+    {
+      "start": 0.835,
+      "end": 0.875,
+      "value": "H"
+    },
+    {
+      "start": 0.895,
+      "end": 0.955,
+      "value": "X"
+    },
+    {
+      "start": 0.955,
+      "end": 1.036,
+      "value": "A"
+    },
+    {
+      "start": 1.036,
+      "end": 1.196,
+      "value": "B"
+    },
+    {
+      "start": 1.196,
+      "end": 1.297,
+      "value": "F"
+    },
+    {
+      "start": 1.317,
+      "end": 1.377,
+      "value": "B"
+    },
+    {
+      "start": 1.377,
+      "end": 1.478,
+      "value": "X"
+    },
+    {
+      "start": 1.478,
+      "end": 1.518,
+      "value": "B"
+    },
+    {
+      "start": 1.518,
+      "end": 1.578,
+      "value": "F"
+    },
+    {
+      "start": 1.598,
+      "end": 1.739,
+      "value": "B"
+    },
+    {
+      "start": 1.739,
+      "end": 1.799,
+      "value": "H"
+    },
+    {
+      "start": 1.799,
+      "end": 1.839,
+      "value": "B"
+    },
+    {
+      "start": 1.839,
+      "end": 1.92,
+      "value": "X"
+    },
+    {
+      "start": 1.94,
+      "end": 2.08,
+      "value": "X"
+    },
+    {
+      "start": 2.08,
+      "end": 2.121,
+      "value": "B"
+    },
+    {
+      "start": 2.121,
+      "end": 2.201,
+      "value": "F"
+    },
+    {
+      "start": 2.221,
+      "end": 2.261,
+      "value": "B"
+    },
+    {
+      "start": 2.261,
+      "end": 2.301,
+      "value": "X"
+    },
+    {
+      "start": 2.301,
+      "end": 2.422,
+      "value": "B"
+    },
+    {
+      "start": 2.442,
+      "end": 2.603,
+      "value": "F"
+    },
+    {
+      "start": 2.623,
+      "end": 2.683,
+      "value": "B"
+    },
+    {
+      "start": 2.683,
+      "end": 2.764,
+      "value": "X"
+    },
+    {
+      "start": 2.764,
+      "end": 2.804,
+      "value": "A"
+    },
+    {
+      "start": 2.804,
+      "end": 2.904,
+      "value": "H"
+    },
+    {
+      "start": 2.924,
+      "end": 3.025,
+      "value": "B"
+    },
+    {
+      "start": 3.025,
+      "end": 3.105,
+      "value": "A"
+    },
+    {
+      "start": 3.125,
+      "end": 3.387,
+      "value": "B"
+    },
+    {
+      "start": 3.387,
+      "end": 3.467,
+      "value": "X"
+    },
+    {
+      "start": 3.487,
+      "end": 3.567,
+      "value": "X"
+    },
+    {
+      "start": 3.587,
+      "end": 3.628,
+      "value": "H"
+    },
+    {
+      "start": 3.628,
+      "end": 3.668,
+      "value": "B"
+    },
+    {
+      "start": 3.668,
+      "end": 3.728,
+      "value": "X"
+    },
+    {
+      "start": 3.728,
+      "end": 3.768,
+      "value": "B"
+    },
+    {
+      "start": 3.768,
+      "end": 3.869,
+      "value": "X"
+    },
+    {
+      "start": 3.889,
+      "end": 3.949,
+      "value": "F"
+    },
+    {
+      "start": 3.949,
+      "end": 4.07,
+      "value": "B"
+    },
+    {
+      "start": 4.13,
+      "end": 4.672,
+      "value": "X"
+    },
+    {
+      "start": 4.672,
+      "end": 4.793,
+      "value": "B"
+    },
+    {
+      "start": 4.793,
+      "end": 5.114,
+      "value": "A"
+    },
+    {
+      "start": 5.114,
+      "end": 5.516,
+      "value": "B"
+    },
+    {
+      "start": 5.536,
+      "end": 5.577,
+      "value": "X"
+    },
+    {
+      "start": 5.577,
+      "end": 6.139,
+      "value": "F"
+    },
+    {
+      "start": 6.139,
+      "end": 6.26,
+      "value": "B"
+    },
+    {
+      "start": 6.28,
+      "end": 6.32,
+      "value": "X"
+    },
+    {
+      "start": 6.38,
+      "end": 6.441,
+      "value": "X"
+    },
+    {
+      "start": 6.441,
+      "end": 6.481,
+      "value": "A"
+    },
+    {
+      "start": 6.481,
+      "end": 6.601,
+      "value": "F"
+    },
+    {
+      "start": 6.601,
+      "end": 6.682,
+      "value": "B"
+    },
+    {
+      "start": 6.682,
+      "end": 6.782,
+      "value": "H"
+    },
+    {
+      "start": 6.782,
+      "end": 6.822,
+      "value": "B"
+    },
+    {
+      "start": 6.842,
+      "end": 6.883,
+      "value": "X"
+    },
+    {
+      "start": 6.883,
+      "end": 6.923,
+      "value": "B"
+    },
+    {
+      "start": 6.943,
+      "end": 7.747,
+      "value": "X"
+    },
+    {
+      "start": 7.747,
+      "end": 7.807,
+      "value": "A"
+    },
+    {
+      "start": 7.807,
+      "end": 7.867,
+      "value": "B"
+    },
+    {
+      "start": 7.867,
+      "end": 7.927,
+      "value": "G"
+    },
+    {
+      "start": 7.927,
+      "end": 7.968,
+      "value": "F"
+    },
+    {
+      "start": 7.968,
+      "end": 8.008,
+      "value": "B"
+    },
+    {
+      "start": 8.028,
+      "end": 8.088,
+      "value": "X"
+    },
+    {
+      "start": 8.108,
+      "end": 8.149,
+      "value": "X"
+    },
+    {
+      "start": 8.149,
+      "end": 8.289,
+      "value": "B"
+    },
+    {
+      "start": 8.289,
+      "end": 8.37,
+      "value": "A"
+    },
+    {
+      "start": 8.39,
+      "end": 8.49,
+      "value": "B"
+    },
+    {
+      "start": 8.51,
+      "end": 8.611,
+      "value": "B"
+    },
+    {
+      "start": 8.631,
+      "end": 8.992,
+      "value": "X"
+    },
+    {
+      "start": 8.992,
+      "end": 9.314,
+      "value": "B"
+    },
+    {
+      "start": 9.394,
+      "end": 10.7,
+      "value": "X"
+    },
+    {
+      "start": 10.7,
+      "end": 10.841,
+      "value": "F"
+    },
+    {
+      "start": 10.841,
+      "end": 10.982,
+      "value": "H"
+    },
+    {
+      "start": 10.982,
+      "end": 11.042,
+      "value": "B"
+    },
+    {
+      "start": 11.042,
+      "end": 11.323,
+      "value": "X"
+    },
+    {
+      "start": 11.323,
+      "end": 11.383,
+      "value": "B"
+    },
+    {
+      "start": 11.383,
+      "end": 11.584,
+      "value": "F"
+    },
+    {
+      "start": 11.584,
+      "end": 11.685,
+      "value": "A"
+    },
+    {
+      "start": 11.685,
+      "end": 11.725,
+      "value": "X"
+    },
+    {
+      "start": 11.725,
+      "end": 12.006,
+      "value": "A"
+    },
+    {
+      "start": 12.006,
+      "end": 12.107,
+      "value": "B"
+    },
+    {
+      "start": 12.107,
+      "end": 12.167,
+      "value": "X"
+    }
+  ]
+}

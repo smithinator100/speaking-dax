@@ -1,0 +1,201 @@
+{
+  "metadata": {
+    "soundFile": "audio-sample.mp3",
+    "duration": 3.983,
+    "transcript": "Hi there, everyone. How are you doing today? Enjoy the beer and cheese.",
+    "language": "en",
+    "source": "whisperx"
+  },
+  "mouthCues": [
+    {
+      "start": 0,
+      "end": 0.153,
+      "value": "X"
+    },
+    {
+      "start": 0.153,
+      "end": 0.234,
+      "value": "B"
+    },
+    {
+      "start": 0.234,
+      "end": 0.274,
+      "value": "X"
+    },
+    {
+      "start": 0.294,
+      "end": 0.335,
+      "value": "X"
+    },
+    {
+      "start": 0.335,
+      "end": 0.376,
+      "value": "B"
+    },
+    {
+      "start": 0.396,
+      "end": 0.436,
+      "value": "B"
+    },
+    {
+      "start": 0.477,
+      "end": 0.517,
+      "value": "B"
+    },
+    {
+      "start": 0.558,
+      "end": 0.761,
+      "value": "B"
+    },
+    {
+      "start": 0.781,
+      "end": 0.821,
+      "value": "B"
+    },
+    {
+      "start": 0.862,
+      "end": 1.207,
+      "value": "X"
+    },
+    {
+      "start": 1.207,
+      "end": 1.247,
+      "value": "F"
+    },
+    {
+      "start": 1.267,
+      "end": 1.308,
+      "value": "X"
+    },
+    {
+      "start": 1.328,
+      "end": 1.369,
+      "value": "B"
+    },
+    {
+      "start": 1.389,
+      "end": 1.429,
+      "value": "X"
+    },
+    {
+      "start": 1.47,
+      "end": 1.511,
+      "value": "F"
+    },
+    {
+      "start": 1.531,
+      "end": 1.592,
+      "value": "B"
+    },
+    {
+      "start": 1.592,
+      "end": 1.673,
+      "value": "F"
+    },
+    {
+      "start": 1.693,
+      "end": 1.734,
+      "value": "B"
+    },
+    {
+      "start": 1.754,
+      "end": 1.815,
+      "value": "X"
+    },
+    {
+      "start": 1.815,
+      "end": 1.855,
+      "value": "B"
+    },
+    {
+      "start": 1.855,
+      "end": 1.916,
+      "value": "F"
+    },
+    {
+      "start": 1.916,
+      "end": 2.017,
+      "value": "B"
+    },
+    {
+      "start": 2.038,
+      "end": 2.078,
+      "value": "B"
+    },
+    {
+      "start": 2.098,
+      "end": 2.443,
+      "value": "X"
+    },
+    {
+      "start": 2.463,
+      "end": 2.686,
+      "value": "B"
+    },
+    {
+      "start": 2.686,
+      "end": 2.727,
+      "value": "F"
+    },
+    {
+      "start": 2.727,
+      "end": 2.787,
+      "value": "B"
+    },
+    {
+      "start": 2.787,
+      "end": 2.828,
+      "value": "X"
+    },
+    {
+      "start": 2.889,
+      "end": 2.95,
+      "value": "X"
+    },
+    {
+      "start": 2.95,
+      "end": 3.031,
+      "value": "A"
+    },
+    {
+      "start": 3.031,
+      "end": 3.193,
+      "value": "B"
+    },
+    {
+      "start": 3.193,
+      "end": 3.294,
+      "value": "X"
+    },
+    {
+      "start": 3.314,
+      "end": 3.355,
+      "value": "B"
+    },
+    {
+      "start": 3.375,
+      "end": 3.456,
+      "value": "X"
+    },
+    {
+      "start": 3.477,
+      "end": 3.558,
+      "value": "X"
+    },
+    {
+      "start": 3.578,
+      "end": 3.74,
+      "value": "B"
+    },
+    {
+      "start": 3.76,
+      "end": 3.801,
+      "value": "B"
+    },
+    {
+      "start": 3.801,
+      "end": 3.983,
+      "value": "X"
+    }
+  ]
+}

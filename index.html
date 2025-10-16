@@ -17,6 +17,7 @@
                 <label for="lipSyncModel">Lip Sync Model</label>
                 <select id="lipSyncModel">
                     <option value="rhubarb">Rhubarb</option>
+                    <option value="whisperx" selected>WhisperX</option>
                     <option value="gentle">Gentle</option>
                 </select>
             </div>
@@ -25,6 +26,7 @@
                 <select id="audioSample">
                     <option value="v2">Sample V2</option>
                     <option value="v3">Sample V3</option>
+                    <option value="v4">Sample V4</option>
                     <option value="v1">Sample V1</option>
                 </select>
             </div>
@@ -56,9 +58,9 @@
             <div class="slider-wrapper">
                 <label for="anticipationTime">
                     Anticipation Time
-                    <span class="slider-value" id="anticipationTimeValue">90ms</span>
+                    <span class="slider-value" id="anticipationTimeValue">-90ms</span>
                 </label>
-                <input type="range" id="anticipationTime" min="-200" max="200" step="10" value="90">
+                <input type="range" id="anticipationTime" min="-200" max="200" step="10" value="-90">
             </div>
             <div class="slider-wrapper">
                 <label for="minDuration">
@@ -93,6 +95,21 @@
             </button>
         </div>
 
+        <div class="waveform-container">
+            <div class="waveform-controls">
+                <button id="zoomReset" class="zoom-btn">Reset Zoom</button>
+                <span id="zoomLevel" class="zoom-indicator">Zoom: 1.0x</span>
+                <span class="waveform-hint">Scroll to zoom • Drag to pan • +/- keys to zoom • 0 to reset</span>
+            </div>
+            <div class="waveform-display">
+                <canvas id="waveformCanvas"></canvas>
+                <div id="waveformOverlay">
+                    <div id="playheadLine"></div>
+                    <div id="phonemeMarkers"></div>
+                </div>
+            </div>
+        </div>
+
         <div id="errorDisplay"></div>
     </div>
 
@@ -103,17 +120,35 @@
             : '/';
         
         let rhubarbData = null;
+        let whisperxData = null;
         let gentleData = null;
         let audio = null;
         let animationFrameId = null;
         let isPlaying = false;
         let lastViseme = 'X';
         let currentMorphAnimation = null;
+        
+        // Waveform variables
+        let audioContext = null;
+        let audioBuffer = null;
+        let waveformData = null;
+        const waveformCanvas = document.getElementById('waveformCanvas');
+        const waveformCtx = waveformCanvas.getContext('2d');
+        const playheadLine = document.getElementById('playheadLine');
+        const phonemeMarkersContainer = document.getElementById('phonemeMarkers');
+        
+        // Zoom and Pan variables
+        let zoomLevel = 1; // 1 = 100%, 2 = 200%, etc.
+        let panOffset = 0; // Offset in percentage (0-1)
+        let isPanning = false;
+        let panStartX = 0;
+        let panStartOffset = 0;
+        let hasDragged = false;
 
         // Runtime animation settings
         let playbackRate = 1.0;
         let transitionSpeed = 90; // ms for dax-transition morphing
-        let anticipationTime = 90; // ms (can be negative for earlier, positive for later)
+        let anticipationTime = -90; // ms (negative = earlier, positive = later)
         let minDuration = 0; // ms
 
         const playButton = document.getElementById('playButton');
@@ -273,19 +308,21 @@
             const sampleMap = {
                 'v1': { dir: 'audio-sample-v1', file: 'audio-sample' },
                 'v2': { dir: 'audio-sample-v2', file: 'audio-sample-v2' },
-                'v3': { dir: 'audio-sample-v3', file: 'audio-sample-v3' }
+                'v3': { dir: 'audio-sample-v3', file: 'audio-sample-v3' },
+                'v4': { dir: 'audio-sample-v4', file: 'audio-sample-v4' }
             };
             
             const config = sampleMap[sample];
             
             return {
                 rhubarb: `${BASE_PATH}audio-samples/${config.dir}/${config.file}_visemes.json`,
+                whisperx: `${BASE_PATH}audio-samples/${config.dir}/${config.file}_visemes-whisperx.json`,
                 gentle: `${BASE_PATH}audio-samples/${config.dir}/${config.file}-gentle_visemes.json`,
                 audio: `${BASE_PATH}audio-samples/${config.dir}/${config.file}.mp3`
             };
         }
 
-        // Load viseme data for both models
+        // Load viseme data for all models
         async function loadVisemeData() {
             try {
                 const paths = getFilePaths();
@@ -297,6 +334,12 @@
                 if (!rhubarbResponse.ok) throw new Error(`Failed to load Rhubarb viseme data (${rhubarbResponse.status}): ${paths.rhubarb}`);
                 rhubarbData = await rhubarbResponse.json();
                 console.log('Loaded Rhubarb viseme data:', rhubarbData);
+                
+                // Load WhisperX data
+                const whisperxResponse = await fetch(paths.whisperx);
+                if (!whisperxResponse.ok) throw new Error(`Failed to load WhisperX viseme data (${whisperxResponse.status}): ${paths.whisperx}`);
+                whisperxData = await whisperxResponse.json();
+                console.log('Loaded WhisperX viseme data:', whisperxData);
                 
                 // Load Gentle data
                 const gentleResponse = await fetch(paths.gentle);
@@ -366,11 +409,18 @@
                 audio = null;
             }
             
+            // Reset zoom and pan
+            zoomLevel = 1;
+            panOffset = 0;
+            
             // Update mouth container background for character
             updateMouthContainerBackground();
             
             // Reload viseme data
             await loadVisemeData();
+            
+            // Reload waveform
+            await loadAudioForWaveform();
             
             // Reset mouth to neutral
             const character = characterSelect.value;
@@ -392,7 +442,9 @@
             
             // Get the selected model's data
             const selectedModel = lipSyncModelSelect.value;
-            const visemeData = selectedModel === 'rhubarb' ? rhubarbData : gentleData;
+            const visemeData = selectedModel === 'rhubarb' ? rhubarbData : 
+                              selectedModel === 'whisperx' ? whisperxData : 
+                              gentleData;
 
             if (visemeData) {
                 const cue = visemeData.mouthCues.find(cue => {
@@ -426,13 +478,14 @@
         function animate() {
             if (audio && isPlaying) {
                 updateMouthShapes(audio.currentTime);
+                updatePlayhead();
                 animationFrameId = requestAnimationFrame(animate);
             }
         }
 
         // Play audio and start animation
         async function playAudio() {
-            if (!rhubarbData || !gentleData) {
+            if (!rhubarbData || !whisperxData || !gentleData) {
                 showError('Viseme data not loaded');
                 return;
             }
@@ -540,6 +593,397 @@
             }, 5000);
         }
 
+        // Initialize waveform canvas sizing
+        function initWaveformCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            const rect = waveformCanvas.getBoundingClientRect();
+            waveformCanvas.width = rect.width * dpr;
+            waveformCanvas.height = rect.height * dpr;
+            waveformCtx.scale(dpr, dpr);
+        }
+
+        // Load and decode audio for waveform
+        async function loadAudioForWaveform() {
+            try {
+                const paths = getFilePaths();
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                const response = await fetch(paths.audio);
+                const arrayBuffer = await response.arrayBuffer();
+                audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                
+                // Extract waveform data
+                extractWaveformData();
+                drawWaveform();
+                renderPhonemeMarkers();
+            } catch (error) {
+                console.error('Error loading audio for waveform:', error);
+                showError('Failed to load audio for waveform');
+            }
+        }
+
+        // Extract waveform data from audio buffer
+        function extractWaveformData() {
+            const rawData = audioBuffer.getChannelData(0); // Get first channel
+            const samples = 1000; // Number of samples to display
+            const blockSize = Math.floor(rawData.length / samples);
+            const filteredData = [];
+            
+            for (let i = 0; i < samples; i++) {
+                let blockStart = blockSize * i;
+                let sum = 0;
+                for (let j = 0; j < blockSize; j++) {
+                    sum += Math.abs(rawData[blockStart + j]);
+                }
+                filteredData.push(sum / blockSize);
+            }
+            
+            waveformData = filteredData;
+        }
+
+        // Draw waveform on canvas
+        function drawWaveform() {
+            if (!waveformData) return;
+            
+            const rect = waveformCanvas.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+            
+            // Clear canvas
+            waveformCtx.clearRect(0, 0, width, height);
+            
+            // Calculate visible range based on zoom and pan
+            const visibleWidth = 1 / zoomLevel; // Percentage of total waveform visible
+            const maxPanOffset = Math.max(0, 1 - visibleWidth);
+            const clampedPanOffset = Math.max(0, Math.min(panOffset, maxPanOffset));
+            
+            const startIndex = Math.floor(clampedPanOffset * waveformData.length);
+            const endIndex = Math.min(
+                Math.ceil((clampedPanOffset + visibleWidth) * waveformData.length),
+                waveformData.length
+            );
+            
+            const visibleSamples = endIndex - startIndex;
+            const barWidth = width / visibleSamples;
+            const barGap = Math.min(1, barWidth * 0.1);
+            
+            // Draw waveform
+            waveformCtx.fillStyle = '#667eea';
+            
+            for (let i = 0; i < visibleSamples; i++) {
+                const dataIndex = startIndex + i;
+                if (dataIndex >= waveformData.length) break;
+                
+                const barHeight = (waveformData[dataIndex] * height * 0.8);
+                const x = i * barWidth;
+                const y = (height - barHeight) / 2;
+                
+                waveformCtx.fillRect(x, y, barWidth - barGap, barHeight);
+            }
+        }
+
+        // Render phoneme markers on overlay
+        function renderPhonemeMarkers() {
+            if (!audioBuffer) return;
+            
+            // Clear existing markers
+            phonemeMarkersContainer.innerHTML = '';
+            
+            // Get the selected model's data
+            const selectedModel = lipSyncModelSelect.value;
+            const visemeData = selectedModel === 'rhubarb' ? rhubarbData : 
+                              selectedModel === 'whisperx' ? whisperxData : 
+                              gentleData;
+            
+            if (!visemeData || !visemeData.mouthCues) return;
+            
+            const duration = audioBuffer.duration;
+            const containerWidth = phonemeMarkersContainer.offsetWidth;
+            const anticipationOffset = anticipationTime / 1000; // Convert ms to seconds
+            
+            // Calculate visible range based on zoom and pan
+            const visibleWidth = 1 / zoomLevel;
+            const maxPanOffset = Math.max(0, 1 - visibleWidth);
+            const clampedPanOffset = Math.max(0, Math.min(panOffset, maxPanOffset));
+            
+            const visibleStartTime = clampedPanOffset * duration;
+            const visibleEndTime = (clampedPanOffset + visibleWidth) * duration;
+            
+            visemeData.mouthCues.forEach((cue, index) => {
+                // Apply anticipation time offset to the positions
+                const adjustedStart = cue.start - anticipationOffset;
+                const adjustedEnd = cue.end - anticipationOffset;
+                
+                // Skip markers outside visible range
+                if (adjustedEnd < visibleStartTime || adjustedStart > visibleEndTime) return;
+                
+                // Calculate percentages relative to visible range
+                const startPercent = ((adjustedStart - visibleStartTime) / (visibleEndTime - visibleStartTime)) * 100;
+                const widthPercent = ((adjustedEnd - adjustedStart) / (visibleEndTime - visibleStartTime)) * 100;
+                const durationMs = ((cue.end - cue.start) * 1000).toFixed(0);
+                
+                const marker = document.createElement('div');
+                marker.className = 'phoneme-marker';
+                marker.style.left = `${startPercent}%`;
+                marker.style.width = `${widthPercent}%`;
+                marker.style.cursor = zoomLevel > 1 ? 'grab' : 'pointer';
+                marker.dataset.index = index;
+                marker.dataset.start = cue.start; // Store original time for seeking
+                marker.dataset.end = cue.end;
+                marker.dataset.adjustedStart = adjustedStart; // Store adjusted time for highlighting
+                marker.dataset.adjustedEnd = adjustedEnd;
+                
+                // Add label
+                const label = document.createElement('div');
+                label.className = 'phoneme-label';
+                label.textContent = cue.value || 'X';
+                marker.appendChild(label);
+                
+                // Add duration label if there's enough space
+                const minWidthForDuration = 3 / zoomLevel; // Adjust threshold based on zoom
+                if (widthPercent > minWidthForDuration) {
+                    const durationLabel = document.createElement('div');
+                    durationLabel.className = 'phoneme-duration';
+                    durationLabel.textContent = `${durationMs}ms`;
+                    marker.appendChild(durationLabel);
+                }
+                
+                // Click to seek (only if not dragging)
+                marker.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (audio && !hasDragged) {
+                        audio.currentTime = parseFloat(marker.dataset.start);
+                        updatePlayhead();
+                    }
+                });
+                
+                phonemeMarkersContainer.appendChild(marker);
+            });
+        }
+
+        // Update playhead position
+        function updatePlayhead() {
+            if (!audio || !audioBuffer) return;
+            
+            const duration = audioBuffer.duration;
+            const currentTime = audio.currentTime;
+            
+            // Calculate visible range based on zoom and pan
+            const visibleWidth = 1 / zoomLevel;
+            const maxPanOffset = Math.max(0, 1 - visibleWidth);
+            const clampedPanOffset = Math.max(0, Math.min(panOffset, maxPanOffset));
+            
+            const visibleStartTime = clampedPanOffset * duration;
+            const visibleEndTime = (clampedPanOffset + visibleWidth) * duration;
+            
+            // Calculate playhead position relative to visible range
+            const relativeProgress = (currentTime - visibleStartTime) / (visibleEndTime - visibleStartTime);
+            playheadLine.style.left = `${relativeProgress * 100}%`;
+            
+            // Hide playhead if outside visible range
+            if (currentTime < visibleStartTime || currentTime > visibleEndTime) {
+                playheadLine.style.opacity = '0';
+            } else {
+                playheadLine.style.opacity = '1';
+            }
+            
+            // Highlight active phoneme marker using adjusted times
+            const selectedModel = lipSyncModelSelect.value;
+            const visemeData = selectedModel === 'rhubarb' ? rhubarbData : 
+                              selectedModel === 'whisperx' ? whisperxData : 
+                              gentleData;
+            
+            if (visemeData) {
+                const markers = phonemeMarkersContainer.querySelectorAll('.phoneme-marker');
+                markers.forEach(marker => {
+                    const adjustedStart = parseFloat(marker.dataset.adjustedStart);
+                    const adjustedEnd = parseFloat(marker.dataset.adjustedEnd);
+                    
+                    // Check if current time is within the adjusted phoneme range
+                    if (audio.currentTime >= adjustedStart && audio.currentTime < adjustedEnd) {
+                        marker.classList.add('active');
+                    } else {
+                        marker.classList.remove('active');
+                    }
+                });
+            }
+        }
+
+        // Update zoom level and redraw
+        function setZoom(newZoom) {
+            const oldZoom = zoomLevel;
+            zoomLevel = Math.max(1, Math.min(newZoom, 10)); // Clamp between 1x and 10x
+            
+            // Adjust pan offset to keep centered content roughly in view
+            const visibleWidth = 1 / zoomLevel;
+            const maxPanOffset = Math.max(0, 1 - visibleWidth);
+            panOffset = Math.max(0, Math.min(panOffset, maxPanOffset));
+            
+            // Update zoom indicator
+            const zoomIndicator = document.getElementById('zoomLevel');
+            if (zoomIndicator) {
+                zoomIndicator.textContent = `Zoom: ${zoomLevel.toFixed(1)}x`;
+            }
+            
+            // Update cursor
+            waveformCanvas.style.cursor = zoomLevel > 1 ? 'grab' : 'pointer';
+            
+            // Update phoneme marker cursors
+            const markers = document.querySelectorAll('.phoneme-marker');
+            markers.forEach(marker => {
+                marker.style.cursor = zoomLevel > 1 ? 'grab' : 'pointer';
+            });
+            
+            drawWaveform();
+            renderPhonemeMarkers();
+            updatePlayhead();
+        }
+
+        // Mouse wheel zoom on waveform - attach to container to capture events even over markers
+        const waveformContainer = document.querySelector('.waveform-container');
+        waveformContainer.addEventListener('wheel', (e) => {
+            if (!audioBuffer) return;
+            
+            // Check if mouse is over the canvas area
+            const canvasRect = waveformCanvas.getBoundingClientRect();
+            const mouseY = e.clientY;
+            if (mouseY < canvasRect.top || mouseY > canvasRect.bottom) return;
+            
+            e.preventDefault();
+            
+            const zoomSpeed = 0.001;
+            const delta = -e.deltaY * zoomSpeed;
+            const newZoom = zoomLevel + delta;
+            
+            // Zoom towards mouse position
+            const mouseX = e.clientX - canvasRect.left;
+            const mousePercent = mouseX / canvasRect.width;
+            
+            // Calculate what time the mouse is pointing at
+            const visibleWidth = 1 / zoomLevel;
+            const clampedPanOffset = Math.max(0, Math.min(panOffset, Math.max(0, 1 - visibleWidth)));
+            const mouseTime = clampedPanOffset + mousePercent * visibleWidth;
+            
+            // Update zoom
+            const oldZoom = zoomLevel;
+            setZoom(newZoom);
+            
+            // Adjust pan to keep mouse position stable
+            const newVisibleWidth = 1 / zoomLevel;
+            panOffset = mouseTime - mousePercent * newVisibleWidth;
+            panOffset = Math.max(0, Math.min(panOffset, Math.max(0, 1 - newVisibleWidth)));
+            
+            drawWaveform();
+            renderPhonemeMarkers();
+            updatePlayhead();
+        }, { passive: false });
+
+        // Mouse drag to pan - attach to both canvas and overlay
+        function handleMouseDown(e) {
+            if (!audioBuffer || zoomLevel <= 1) return;
+            
+            // Check if mouse is over the waveform area
+            const canvasRect = waveformCanvas.getBoundingClientRect();
+            const mouseY = e.clientY;
+            if (mouseY < canvasRect.top || mouseY > canvasRect.bottom) return;
+            
+            isPanning = true;
+            hasDragged = false;
+            panStartX = e.clientX;
+            panStartOffset = panOffset;
+            waveformCanvas.style.cursor = 'grabbing';
+            e.preventDefault();
+        }
+        
+        waveformCanvas.addEventListener('mousedown', handleMouseDown);
+        phonemeMarkersContainer.addEventListener('mousedown', handleMouseDown);
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isPanning) return;
+            
+            const rect = waveformCanvas.getBoundingClientRect();
+            const deltaX = e.clientX - panStartX;
+            const deltaPercent = deltaX / rect.width;
+            const visibleWidth = 1 / zoomLevel;
+            
+            // Mark as dragged if moved more than a few pixels
+            if (Math.abs(deltaX) > 3) {
+                hasDragged = true;
+            }
+            
+            panOffset = panStartOffset - deltaPercent * visibleWidth;
+            panOffset = Math.max(0, Math.min(panOffset, Math.max(0, 1 - visibleWidth)));
+            
+            drawWaveform();
+            renderPhonemeMarkers();
+            updatePlayhead();
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (isPanning) {
+                isPanning = false;
+                waveformCanvas.style.cursor = zoomLevel > 1 ? 'grab' : 'pointer';
+                // Reset hasDragged after a short delay to prevent click event
+                setTimeout(() => {
+                    hasDragged = false;
+                }, 50);
+            }
+        });
+
+        // Click on waveform to seek
+        waveformCanvas.addEventListener('click', (e) => {
+            if (!audio || !audioBuffer || isPanning || hasDragged) return;
+            
+            const rect = waveformCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const clickPercent = x / rect.width;
+            
+            // Calculate visible range
+            const visibleWidth = 1 / zoomLevel;
+            const maxPanOffset = Math.max(0, 1 - visibleWidth);
+            const clampedPanOffset = Math.max(0, Math.min(panOffset, maxPanOffset));
+            
+            // Convert click position to time
+            const visibleStartTime = clampedPanOffset * audioBuffer.duration;
+            const visibleEndTime = (clampedPanOffset + visibleWidth) * audioBuffer.duration;
+            const clickTime = visibleStartTime + clickPercent * (visibleEndTime - visibleStartTime);
+            
+            audio.currentTime = clickTime;
+            updatePlayhead();
+        });
+
+        // Zoom reset button
+        document.getElementById('zoomReset').addEventListener('click', () => {
+            zoomLevel = 1;
+            panOffset = 0;
+            setZoom(1);
+        });
+
+        // Keyboard shortcuts for zoom
+        window.addEventListener('keydown', (e) => {
+            if (!audioBuffer) return;
+            
+            // + or = key to zoom in
+            if (e.key === '+' || e.key === '=') {
+                e.preventDefault();
+                setZoom(zoomLevel + 0.5);
+            }
+            // - key to zoom out
+            else if (e.key === '-' || e.key === '_') {
+                e.preventDefault();
+                setZoom(zoomLevel - 0.5);
+            }
+            // 0 key to reset zoom
+            else if (e.key === '0') {
+                e.preventDefault();
+                zoomLevel = 1;
+                panOffset = 0;
+                setZoom(1);
+            }
+        });
+
         // Initialize
         playButton.addEventListener('click', togglePlay);
         lipSyncModelSelect.addEventListener('change', () => {
@@ -554,6 +998,8 @@
                 }
                 lastViseme = 'X';
             }
+            // Re-render phoneme markers for the new model
+            renderPhonemeMarkers();
         });
         audioSampleSelect.addEventListener('change', reloadData);
         characterSelect.addEventListener('change', reloadData);
@@ -576,6 +1022,8 @@
         anticipationTimeSlider.addEventListener('input', (e) => {
             anticipationTime = parseInt(e.target.value);
             anticipationTimeValue.textContent = `${anticipationTime}ms`;
+            // Re-render phoneme markers with new anticipation offset
+            renderPhonemeMarkers();
         });
 
         minDurationSlider.addEventListener('input', (e) => {
@@ -584,7 +1032,7 @@
         });
 
         // Initialize on page load
-        function initializePage() {
+        async function initializePage() {
             applyTransitionSpeed(); // Apply initial transition speed
             updateMouthContainerBackground(); // Set initial background
             
@@ -599,8 +1047,19 @@
                 mouthImage.style.display = 'block';
             }
             
-            loadVisemeData();
+            // Initialize waveform
+            initWaveformCanvas();
+            
+            // Load data
+            await loadVisemeData();
+            await loadAudioForWaveform();
         }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            initWaveformCanvas();
+            drawWaveform();
+        });
         
         initializePage();
     </script>

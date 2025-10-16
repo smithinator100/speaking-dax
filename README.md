@@ -1,6 +1,6 @@
 # Speaking DAX - Audio to Viseme Converter
 
-Convert audio files to JSON viseme maps for lip-sync animation using Rhubarb Lip Sync, Gentle forced aligner, or Azure Speech Service.
+Convert audio files to JSON viseme maps for lip-sync animation using either Rhubarb Lip Sync or Gentle forced aligner.
 
 ## Table of Contents
 
@@ -21,47 +21,47 @@ Convert audio files to JSON viseme maps for lip-sync animation using Rhubarb Lip
 This project provides three powerful tools for generating lip-sync animation data:
 
 - **[Rhubarb Lip Sync](https://github.com/DanielSWolf/rhubarb-lip-sync)** - Fast phonetic analysis (no transcript required)
+- **[WhisperX](https://github.com/m-bain/whisperX)** - AI-powered transcription with phoneme alignment (no transcript required)
 - **[Gentle](https://github.com/lowerquality/gentle)** - Accurate forced alignment (requires transcript)
-- **[Azure Speech Service](https://azure.microsoft.com/en-us/services/cognitive-services/speech-services/)** - Text-to-speech with visemes (generates audio from text)
 
-All tools generate identical JSON output formats, allowing you to seamlessly switch between them or use all three depending on your needs.
+All tools generate identical JSON output formats, allowing you to seamlessly switch between them or use multiple depending on your needs.
 
 ## Which Tool Should I Use?
 
-| Feature | Rhubarb | Gentle | Azure Speech |
-|---------|---------|--------|--------------|
-| **Speed** | ⚡ Fast (~5-10s per minute) | 🐢 Moderate (~30-60s per minute) | ⚡ Fast (cloud-based) |
-| **Accuracy** | ✅ Good (~85-90%) | ⭐ Excellent (~95-98%) | ⭐ Excellent (~98%+) |
-| **Input** | Audio file | Audio + transcript | Text only |
-| **Output** | Visemes | Visemes | Audio + visemes |
-| **Setup Complexity** | 🟢 Simple (single binary) | 🟡 Moderate (Python + models) | 🟢 Simple (API key) |
-| **Cost** | Free | Free | Free tier + paid |
-| **Platform Support** | macOS, Linux, Windows | macOS, Linux, Docker | Cloud (any platform) |
-| **Best For** | Quick lip sync, no transcript | Precise lip sync with known text | Generate new audio from text |
+| Feature | Rhubarb | WhisperX | Gentle |
+|---------|---------|----------|--------|
+| **Speed** | ⚡ Fast (~5-10s/min) | ⚡⚡ Very Fast (~10-20s/min) | 🐢 Moderate (~30-60s/min) |
+| **Accuracy** | ✅ Good (~85-90%) | ⭐⭐ Excellent (~90-95%) | ⭐ Excellent (~95-98%) |
+| **Transcript Required** | ❌ No | ❌ No (auto-generates) | ✅ Yes |
+| **Setup Complexity** | 🟢 Simple (binary) | 🟡 Moderate (Python) | 🔴 Complex (Python + Kaldi) |
+| **File Size** | ~20 MB | ~75 MB - 1.5 GB | ~500 MB |
+| **Multi-language** | ❌ English only | ✅ 90+ languages | ✅ Multiple languages |
+| **GPU Support** | ❌ No | ✅ Yes (CUDA) | ❌ No |
+| **Best For** | Quick lip sync | AI transcription + visemes | Known transcript precision |
 
 ### Use Rhubarb when:
 - ✅ You don't have a transcript
-- ✅ You need fast results
-- ✅ Setup simplicity matters
+- ✅ You need the fastest results
+- ✅ Setup simplicity is critical
 - ✅ Working with music/non-speech
 - ✅ Real-time applications
 - ✅ Prototyping and iteration
 
+### Use WhisperX when:
+- ✅ You don't have a transcript (auto-generates)
+- ✅ You need high accuracy without manual transcripts
+- ✅ Multi-language support required
+- ✅ You have a GPU for faster processing
+- ✅ Modern AI-based approach preferred
+- ✅ You need both transcription and viseme data
+
 ### Use Gentle when:
 - ✅ You have an accurate transcript
-- ✅ You need precise phoneme timing
-- ✅ You want word-level alignment
+- ✅ You need maximum phoneme timing precision
+- ✅ You want word-level alignment with known text
 - ✅ Working with clear dialogue
-- ✅ Production quality needed
+- ✅ Production quality with transcript
 - ✅ You can afford longer processing time
-
-### Use Azure Speech when:
-- ✅ You need to generate audio from text
-- ✅ You want professional voice actors
-- ✅ You need multi-language support (140+ languages)
-- ✅ You want voice customization (pitch, rate, style)
-- ✅ You need perfect audio-viseme synchronization
-- ✅ You're building a production application with TTS
 
 ## Installation
 
@@ -71,7 +71,7 @@ All tools generate identical JSON output formats, allowing you to seamlessly swi
 npm install
 ```
 
-### 2. Choose Your Tool(s)
+### 2. Choose Your Tool
 
 #### Option A: Rhubarb (Recommended for Beginners)
 
@@ -90,31 +90,33 @@ brew install rhubarb-lip-sync
 rhubarb --version
 ```
 
-#### Option B: Azure Speech (For Text-to-Speech)
+#### Option B: WhisperX (Recommended for AI-based approach)
 
 **Prerequisites:**
-- Azure account (free tier available)
+- Python 3.8+
+- (Optional) NVIDIA GPU with CUDA for faster processing
 
 **Quick Setup:**
 ```bash
-# 1. Create Azure Speech Service resource at: https://portal.azure.com/
-# 2. Get your subscription key and region
-# 3. Set environment variables
-export AZURE_SPEECH_KEY="your-subscription-key"
-export AZURE_SPEECH_REGION="eastus"
+# Install Python dependencies
+cd lip-sync-libraries/whisperx
+pip install -r requirements.txt
 
-# 4. Test installation
-npm run convert:azure "Hello world"
+# Or install manually
+pip install whisperx torch torchaudio
+
+# Verify installation
+python3 -c "import whisperx; print('WhisperX installed successfully')"
 ```
 
-**Features:**
-- 400+ neural voices in 140+ languages
-- Generate audio and visemes from text
-- Voice customization (pitch, rate, style)
-- Perfect synchronization
-- Free tier: 5M characters/month
+**For GPU acceleration (optional but recommended):**
+```bash
+# Visit https://pytorch.org/get-started/locally/ for your specific CUDA version
+# Example for CUDA 11.8:
+pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
 
-[See full Azure documentation](./lip-sync-libraries/azure/README.md)
+See [WhisperX README](lip-sync-libraries/whisperx/README.md) for detailed setup instructions.
 
 #### Option C: Gentle (For Advanced Users)
 
@@ -176,6 +178,15 @@ node lip-sync-libraries/rhubarb/mp3-to-viseme.js audio.mp3
 node lip-sync-libraries/rhubarb/mp3-to-viseme.js audio.mp3 output.json dialog.txt
 ```
 
+**Using WhisperX:**
+```bash
+# No transcript required (auto-transcribes)
+node lip-sync-libraries/whisperx/whisperx-to-viseme.js audio.mp3
+
+# With larger model for better accuracy
+node lip-sync-libraries/whisperx/whisperx-to-viseme.js audio.mp3 output.json --model large-v2
+```
+
 **Using Gentle:**
 ```bash
 # Requires transcript
@@ -212,6 +223,44 @@ const visemeData = await convertMp3ToViseme('audio.mp3', 'visemes.json', {
 });
 ```
 
+### WhisperX - AI-Powered, No Transcript Required
+
+**Command Line:**
+```bash
+# Basic usage (no transcript required)
+node lip-sync-libraries/whisperx/whisperx-to-viseme.js audio.mp3
+
+# With custom output
+node lip-sync-libraries/whisperx/whisperx-to-viseme.js audio.mp3 output.json
+
+# With larger model for better accuracy
+node lip-sync-libraries/whisperx/whisperx-to-viseme.js audio.mp3 output.json --model large-v2
+
+# Specify language for faster processing
+node lip-sync-libraries/whisperx/whisperx-to-viseme.js audio.mp3 output.json --language en
+
+# Use GPU acceleration (requires CUDA)
+node lip-sync-libraries/whisperx/whisperx-to-viseme.js audio.mp3 output.json --device cuda
+
+# Using npm script
+npm run convert:whisperx audio.mp3
+```
+
+**As a Module:**
+```javascript
+import { convertAudioToViseme } from './lip-sync-libraries/whisperx/whisperx-to-viseme.js';
+
+const visemeData = await convertAudioToViseme('audio.mp3', 'visemes.json', {
+  model: 'base',           // Model: tiny, base, small, medium, large-v2
+  language: 'auto',        // Language code or 'auto' for detection
+  device: 'cpu',           // 'cpu' or 'cuda' (GPU)
+  batchSize: 16,           // Batch size
+  computeType: 'float32',  // 'float32', 'float16', 'int8'
+  minDuration: 0.03,       // Min viseme duration
+  verbose: false           // Verbose logging
+});
+```
+
 ### Gentle - Accurate, Requires Transcript
 
 **Command Line:**
@@ -224,20 +273,6 @@ node lip-sync-libraries/gentle/gentle-to-viseme.js audio.mp3 transcript.txt outp
 
 # Using npm script
 npm run convert:gentle audio.mp3 transcript.txt
-```
-
-### Azure Speech - Generate Audio from Text
-
-**Command Line:**
-```bash
-# Basic usage (generates audio and visemes from text)
-node lip-sync-libraries/azure/azure-to-viseme.js "Hello world" output.json
-
-# With audio output
-node lip-sync-libraries/azure/azure-to-viseme.js "Your text here" output.json output.wav
-
-# Using npm script
-npm run convert:azure "Your text here"
 ```
 
 **As a Module:**
@@ -253,28 +288,6 @@ const visemeData = await convertAudioToViseme(
     nthreads: 4,             // Number of threads
     disfluency: false,       // Include uh, um, etc.
     minDuration: 0.03        // Minimum viseme duration
-  }
-);
-```
-
-### Azure Speech API
-
-**As a Module:**
-```javascript
-import { convertTextToViseme } from './lip-sync-libraries/azure/azure-to-viseme.js';
-
-const visemeData = await convertTextToViseme(
-  'Hello, how are you today?',
-  'visemes.json',
-  {
-    subscriptionKey: process.env.AZURE_SPEECH_KEY,
-    region: 'eastus',
-    voiceName: 'en-US-JennyNeural',  // 400+ voices available
-    outputAudioPath: 'audio.wav',    // Optional audio output
-    speakingRate: 1.0,               // 0.5-2.0
-    pitch: 0,                        // -200 to +200 Hz
-    style: 'cheerful',               // Voice style (if supported)
-    minDuration: 0.03                // Minimum viseme duration
   }
 );
 ```
@@ -347,8 +360,9 @@ Both tools generate identical JSON format:
 **Fields:**
 - `metadata.soundFile` - Original audio file path
 - `metadata.duration` - Total duration in seconds
-- `metadata.transcript` - Transcript text (Gentle only)
-- `metadata.source` - Tool used: `"rhubarb"` or `"gentlejs"`
+- `metadata.transcript` - Transcript text (WhisperX and Gentle)
+- `metadata.language` - Detected language (WhisperX only)
+- `metadata.source` - Tool used: `"rhubarb"`, `"whisperx"`, or `"gentlejs"`
 - `mouthCues` - Array of timed mouth shapes
 
 ## API Reference
@@ -367,6 +381,24 @@ Both tools generate identical JSON format:
   - `exportFormat` (string): 'json', 'tsv', 'xml', 'dat'
 
 **Returns:** Promise<Object> - Viseme map data
+
+### WhisperX API
+
+#### `convertAudioToViseme(audioPath, outputJsonPath, options)`
+
+**Parameters:**
+- `audioPath` (string): Path to input audio file (any format)
+- `outputJsonPath` (string): Path for output JSON file
+- `options` (object):
+  - `model` (string): Model size - 'tiny', 'base', 'small', 'medium', 'large-v2'
+  - `language` (string): Language code (e.g., 'en', 'es') or 'auto'
+  - `device` (string): 'cpu' or 'cuda' for GPU acceleration
+  - `batchSize` (number): Batch size for processing
+  - `computeType` (string): 'float32', 'float16', 'int8'
+  - `minDuration` (number): Min viseme duration in seconds
+  - `verbose` (boolean): Enable verbose logging
+
+**Returns:** Promise<Object> - Viseme map data with transcript
 
 ### Gentle API
 
@@ -399,13 +431,14 @@ Gets human-readable description for viseme code.
 
 Based on testing with 1-minute audio file on MacBook Pro M1:
 
-| Metric | Rhubarb | Gentle |
-|--------|---------|--------|
-| Processing Time | 5-8 seconds | 30-45 seconds |
-| Memory Usage | ~50 MB | ~500 MB |
-| CPU Usage | Low-Medium | High |
-| Disk Space | ~20 MB | ~500 MB |
-| Cold Start | Instant | 2-3 seconds |
+| Metric | Rhubarb | WhisperX (CPU) | WhisperX (GPU) | Gentle |
+|--------|---------|----------------|----------------|--------|
+| Processing Time | 5-8 seconds | 10-20 seconds | 3-5 seconds | 30-45 seconds |
+| Memory Usage | ~50 MB | ~500 MB - 2 GB | ~1-3 GB | ~500 MB |
+| CPU Usage | Low-Medium | High | Low | High |
+| Disk Space | ~20 MB | ~75 MB - 1.5 GB | ~75 MB - 1.5 GB | ~500 MB |
+| Cold Start | Instant | 5-10 seconds | 5-10 seconds | 2-3 seconds |
+| GPU Acceleration | ❌ No | ❌ No | ✅ Yes | ❌ No |
 
 ### Accuracy Comparison
 
@@ -414,6 +447,13 @@ Based on testing with 1-minute audio file on MacBook Pro M1:
 - Timing Precision: ±50ms typical
 - Best With: Clear speech, single speaker
 - Struggles With: Multiple speakers, background noise
+
+**WhisperX:**
+- Phoneme Detection: ~90-95% accurate
+- Timing Precision: ±20-30ms typical
+- Transcription: ~95-98% accurate (auto-generated)
+- Best With: Clear speech, any language, any accent
+- Struggles With: Heavy background noise, overlapping speakers
 
 **Gentle:**
 - Phoneme Detection: ~95-98% accurate (with transcript)
@@ -428,6 +468,12 @@ Based on testing with 1-minute audio file on MacBook Pro M1:
 - Algorithm: Phonetic pattern matching
 - Recognition: PocketSphinx (optional) or phonetic rules
 - Installation: Single executable download
+
+**WhisperX:**
+- Language: Python + PyTorch
+- Algorithm: Transformer-based neural network (Whisper)
+- Recognition: OpenAI Whisper + forced alignment
+- Installation: pip install + automatic model downloads
 
 **Gentle:**
 - Language: Python + C++ (Kaldi)

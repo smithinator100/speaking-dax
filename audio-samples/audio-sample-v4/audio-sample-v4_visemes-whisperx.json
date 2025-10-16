@@ -1,0 +1,111 @@
+{
+  "metadata": {
+    "soundFile": "audio-sample-v4.mp3",
+    "duration": 2.886,
+    "transcript": "Peanut, coffee, bubble and snake.",
+    "language": "en",
+    "source": "whisperx"
+  },
+  "mouthCues": [
+    {
+      "start": 0,
+      "end": 0.031,
+      "value": "X"
+    },
+    {
+      "start": 0.031,
+      "end": 0.378,
+      "value": "A"
+    },
+    {
+      "start": 0.419,
+      "end": 0.52,
+      "value": "B"
+    },
+    {
+      "start": 0.52,
+      "end": 0.602,
+      "value": "F"
+    },
+    {
+      "start": 0.622,
+      "end": 0.99,
+      "value": "X"
+    },
+    {
+      "start": 0.99,
+      "end": 1.112,
+      "value": "B"
+    },
+    {
+      "start": 1.132,
+      "end": 1.275,
+      "value": "G"
+    },
+    {
+      "start": 1.275,
+      "end": 1.357,
+      "value": "B"
+    },
+    {
+      "start": 1.377,
+      "end": 1.744,
+      "value": "X"
+    },
+    {
+      "start": 1.744,
+      "end": 1.846,
+      "value": "A"
+    },
+    {
+      "start": 1.867,
+      "end": 1.989,
+      "value": "A"
+    },
+    {
+      "start": 1.989,
+      "end": 2.03,
+      "value": "H"
+    },
+    {
+      "start": 2.03,
+      "end": 2.091,
+      "value": "B"
+    },
+    {
+      "start": 2.091,
+      "end": 2.213,
+      "value": "X"
+    },
+    {
+      "start": 2.234,
+      "end": 2.295,
+      "value": "B"
+    },
+    {
+      "start": 2.315,
+      "end": 2.417,
+      "value": "X"
+    },
+    {
+      "start": 2.417,
+      "end": 2.601,
+      "value": "B"
+    },
+    {
+      "start": 2.601,
+      "end": 2.682,
+      "value": "D"
+    },
+    {
+      "start": 2.682,
+      "end": 2.764,
+      "value": "B"
+    },
+    {
+      "start": 2.764,
+      "end": 2.886,
+      "value": "X"
+    }
+  ]
+}
