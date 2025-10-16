@@ -17,8 +17,9 @@
                 <label for="lipSyncModel">Lip Sync Model</label>
                 <select id="lipSyncModel">
                     <option value="rhubarb">Rhubarb</option>
-                    <option value="whisperx" selected>WhisperX</option>
+                    <option value="whisperx">WhisperX</option>
                     <option value="gentle">Gentle</option>
+                    <option value="hybrid" selected>Hybrid (WhisperX → Gentle) ⭐</option>
                 </select>
             </div>
             <div class="select-wrapper">
@@ -51,16 +52,16 @@
             <div class="slider-wrapper">
                 <label for="transitionSpeed">
                     Transition Speed
-                    <span class="slider-value" id="transitionSpeedValue">90ms</span>
+                    <span class="slider-value" id="transitionSpeedValue">50ms</span>
                 </label>
-                <input type="range" id="transitionSpeed" min="0" max="500" step="10" value="90">
+                <input type="range" id="transitionSpeed" min="0" max="500" step="10" value="50">
             </div>
             <div class="slider-wrapper">
                 <label for="anticipationTime">
                     Anticipation Time
-                    <span class="slider-value" id="anticipationTimeValue">-90ms</span>
+                    <span class="slider-value" id="anticipationTimeValue">10ms</span>
                 </label>
-                <input type="range" id="anticipationTime" min="-200" max="200" step="10" value="-90">
+                <input type="range" id="anticipationTime" min="-200" max="200" step="10" value="10">
             </div>
             <div class="slider-wrapper">
                 <label for="minDuration">
@@ -122,6 +123,7 @@
         let rhubarbData = null;
         let whisperxData = null;
         let gentleData = null;
+        let hybridData = null;
         let audio = null;
         let animationFrameId = null;
         let isPlaying = false;
@@ -147,9 +149,29 @@
 
         // Runtime animation settings
         let playbackRate = 1.0;
-        let transitionSpeed = 90; // ms for dax-transition morphing
-        let anticipationTime = -90; // ms (negative = earlier, positive = later)
+        let transitionSpeed = 50; // ms for dax-transition morphing (default for hybrid)
+        let anticipationTime = 10; // ms (negative = earlier, positive = later, default for hybrid)
         let minDuration = 0; // ms
+        
+        // Optimal settings for different models
+        const modelSettings = {
+            hybrid: {
+                transitionSpeed: 50,
+                anticipationTime: 10
+            },
+            gentle: {
+                transitionSpeed: 70,
+                anticipationTime: -50
+            },
+            whisperx: {
+                transitionSpeed: 90,
+                anticipationTime: -90
+            },
+            rhubarb: {
+                transitionSpeed: 90,
+                anticipationTime: -90
+            }
+        };
 
         const playButton = document.getElementById('playButton');
         const errorDisplay = document.getElementById('errorDisplay');
@@ -318,6 +340,7 @@
                 rhubarb: `${BASE_PATH}audio-samples/${config.dir}/${config.file}_visemes.json`,
                 whisperx: `${BASE_PATH}audio-samples/${config.dir}/${config.file}_visemes-whisperx.json`,
                 gentle: `${BASE_PATH}audio-samples/${config.dir}/${config.file}-gentle_visemes.json`,
+                hybrid: `${BASE_PATH}audio-samples/${config.dir}/${config.file}_visemes-hybrid.json`,
                 audio: `${BASE_PATH}audio-samples/${config.dir}/${config.file}.mp3`
             };
         }
@@ -346,9 +369,38 @@
                 if (!gentleResponse.ok) throw new Error(`Failed to load Gentle viseme data (${gentleResponse.status}): ${paths.gentle}`);
                 gentleData = await gentleResponse.json();
                 console.log('Loaded Gentle viseme data:', gentleData);
+                
+                // Load Hybrid data
+                const hybridResponse = await fetch(paths.hybrid);
+                if (!hybridResponse.ok) throw new Error(`Failed to load Hybrid viseme data (${hybridResponse.status}): ${paths.hybrid}`);
+                hybridData = await hybridResponse.json();
+                console.log('Loaded Hybrid viseme data:', hybridData);
             } catch (error) {
                 console.error('Error loading viseme data:', error);
                 showError('Failed to load viseme data: ' + error.message);
+            }
+        }
+
+        // Apply optimal settings for selected model
+        function applyModelSettings(model) {
+            const settings = modelSettings[model];
+            if (settings) {
+                // Update transition speed
+                transitionSpeed = settings.transitionSpeed;
+                transitionSpeedSlider.value = settings.transitionSpeed;
+                transitionSpeedValue.textContent = `${settings.transitionSpeed}ms`;
+                
+                // Update anticipation time
+                anticipationTime = settings.anticipationTime;
+                anticipationTimeSlider.value = settings.anticipationTime;
+                anticipationTimeValue.textContent = `${settings.anticipationTime}ms`;
+                
+                // Re-render phoneme markers with new anticipation offset
+                if (audioBuffer) {
+                    renderPhonemeMarkers();
+                }
+                
+                console.log(`Applied optimal settings for ${model}:`, settings);
             }
         }
 
@@ -444,7 +496,8 @@
             const selectedModel = lipSyncModelSelect.value;
             const visemeData = selectedModel === 'rhubarb' ? rhubarbData : 
                               selectedModel === 'whisperx' ? whisperxData : 
-                              gentleData;
+                              selectedModel === 'gentle' ? gentleData :
+                              hybridData;
 
             if (visemeData) {
                 const cue = visemeData.mouthCues.find(cue => {
@@ -485,7 +538,7 @@
 
         // Play audio and start animation
         async function playAudio() {
-            if (!rhubarbData || !whisperxData || !gentleData) {
+            if (!rhubarbData || !whisperxData || !gentleData || !hybridData) {
                 showError('Viseme data not loaded');
                 return;
             }
@@ -695,7 +748,8 @@
             const selectedModel = lipSyncModelSelect.value;
             const visemeData = selectedModel === 'rhubarb' ? rhubarbData : 
                               selectedModel === 'whisperx' ? whisperxData : 
-                              gentleData;
+                              selectedModel === 'gentle' ? gentleData :
+                              hybridData;
             
             if (!visemeData || !visemeData.mouthCues) return;
             
@@ -793,7 +847,8 @@
             const selectedModel = lipSyncModelSelect.value;
             const visemeData = selectedModel === 'rhubarb' ? rhubarbData : 
                               selectedModel === 'whisperx' ? whisperxData : 
-                              gentleData;
+                              selectedModel === 'gentle' ? gentleData :
+                              hybridData;
             
             if (visemeData) {
                 const markers = phonemeMarkersContainer.querySelectorAll('.phoneme-marker');
@@ -987,6 +1042,9 @@
         // Initialize
         playButton.addEventListener('click', togglePlay);
         lipSyncModelSelect.addEventListener('change', () => {
+            // Apply optimal settings for the selected model
+            applyModelSettings(lipSyncModelSelect.value);
+            
             // When switching models, just reset the mouth if playing
             if (isPlaying && audio) {
                 const character = characterSelect.value;
@@ -1035,6 +1093,9 @@
         async function initializePage() {
             applyTransitionSpeed(); // Apply initial transition speed
             updateMouthContainerBackground(); // Set initial background
+            
+            // Apply optimal settings for the initially selected model
+            applyModelSettings(lipSyncModelSelect.value);
             
             // Set initial mouth image
             const character = characterSelect.value;

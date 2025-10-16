@@ -1,13 +1,14 @@
 {
   "name": "speaking-dax",
   "version": "1.0.0",
-  "description": "Convert MP3 audio files to JSON viseme maps using Rhubarb Lip Sync, WhisperX, or GentleJS",
+  "description": "Convert MP3 audio files to JSON viseme maps using Rhubarb Lip Sync, WhisperX, Gentle, or Hybrid Pipeline",
   "type": "module",
   "main": "lip-sync-libraries/rhubarb/mp3-to-viseme.js",
   "scripts": {
     "convert": "node lip-sync-libraries/rhubarb/mp3-to-viseme.js",
     "convert:whisperx": "node lip-sync-libraries/whisperx/whisperx-to-viseme.js",
     "convert:gentle": "node lip-sync-libraries/gentle/gentle-to-viseme.js",
+    "convert:hybrid": "node lip-sync-libraries/hybrid/hybrid-to-viseme.js",
     "test": "node lip-sync-libraries/rhubarb/mp3-to-viseme.js"
   },
   "keywords": [
