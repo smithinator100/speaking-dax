@@ -7,7 +7,7 @@ import {
   convertGentleToVisemes,
   formatVisemeData,
   getVisemeDescription
-} from '../../utilities/phoneme-to-viseme.js';
+} from '../phoneme-to-viseme.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

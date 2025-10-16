@@ -16,15 +16,13 @@
             <div class="select-wrapper">
                 <label for="lipSyncModel">Lip Sync Model</label>
                 <select id="lipSyncModel">
-                    <option value="rhubarb">Rhubarb</option>
-                    <option value="whisperx">WhisperX</option>
-                    <option value="gentle">Gentle</option>
-                    <option value="hybrid" selected>Hybrid (WhisperX → Gentle) ⭐</option>
+                    <option value="gentle" selected>Gentle</option>
                 </select>
             </div>
             <div class="select-wrapper">
                 <label for="audioSample">Audio Sample</label>
                 <select id="audioSample">
+                    <option value="v5" selected>Sample V5</option>
                     <option value="v2">Sample V2</option>
                     <option value="v3">Sample V3</option>
                     <option value="v4">Sample V4</option>
@@ -34,8 +32,6 @@
             <div class="select-wrapper">
                 <label for="character">Character</label>
                 <select id="character">
-                    <option value="barry">Barry</option>
-                    <option value="dax">Dax</option>
                     <option value="dax-transition" selected>Dax Transition</option>
                 </select>
             </div>
@@ -120,10 +116,7 @@
             ? '/speaking-dax/' 
             : '/';
         
-        let rhubarbData = null;
-        let whisperxData = null;
         let gentleData = null;
-        let hybridData = null;
         let audio = null;
         let animationFrameId = null;
         let isPlaying = false;
@@ -155,21 +148,9 @@
         
         // Optimal settings for different models
         const modelSettings = {
-            hybrid: {
-                transitionSpeed: 50,
-                anticipationTime: 10
-            },
             gentle: {
                 transitionSpeed: 70,
                 anticipationTime: -50
-            },
-            whisperx: {
-                transitionSpeed: 90,
-                anticipationTime: -90
-            },
-            rhubarb: {
-                transitionSpeed: 90,
-                anticipationTime: -90
             }
         };
 
@@ -226,10 +207,7 @@
 
         // Get mouth shapes directory based on character selection
         function getMouthShapesDir() {
-            const character = characterSelect.value;
-            if (character === 'dax') return 'mouth-shapes-dax';
-            if (character === 'dax-transition') return 'mouth-shapes-dax-transition';
-            return 'mouth-shapes-v2';
+            return 'mouth-shapes-dax-transition';
         }
 
         // Morph SVG beak to new shape
@@ -328,20 +306,18 @@
             
             // Map sample values to actual directory and file names
             const sampleMap = {
-                'v1': { dir: 'audio-sample-v1', file: 'audio-sample' },
-                'v2': { dir: 'audio-sample-v2', file: 'audio-sample-v2' },
-                'v3': { dir: 'audio-sample-v3', file: 'audio-sample-v3' },
-                'v4': { dir: 'audio-sample-v4', file: 'audio-sample-v4' }
+                'v1': { dir: 'audio-sample-v1', file: 'audio-sample', ext: 'wav' },
+                'v2': { dir: 'audio-sample-v2', file: 'audio-sample-v2', ext: 'wav' },
+                'v3': { dir: 'audio-sample-v3', file: 'audio-sample-v3', ext: 'wav' },
+                'v4': { dir: 'audio-sample-v4', file: 'audio-sample-v4', ext: 'wav' },
+                'v5': { dir: 'audio-sample-v5', file: 'audio-sample-v5', ext: 'mp3' }
             };
             
             const config = sampleMap[sample];
             
             return {
-                rhubarb: `${BASE_PATH}audio-samples/${config.dir}/${config.file}_visemes.json`,
-                whisperx: `${BASE_PATH}audio-samples/${config.dir}/${config.file}_visemes-whisperx.json`,
                 gentle: `${BASE_PATH}audio-samples/${config.dir}/${config.file}-gentle_visemes.json`,
-                hybrid: `${BASE_PATH}audio-samples/${config.dir}/${config.file}_visemes-hybrid.json`,
-                audio: `${BASE_PATH}audio-samples/${config.dir}/${config.file}.mp3`
+                audio: `${BASE_PATH}audio-samples/${config.dir}/${config.file}.${config.ext}`
             };
         }
 
@@ -352,29 +328,11 @@
                 console.log('Loading viseme data from:', paths);
                 console.log('BASE_PATH:', BASE_PATH);
                 
-                // Load Rhubarb data
-                const rhubarbResponse = await fetch(paths.rhubarb);
-                if (!rhubarbResponse.ok) throw new Error(`Failed to load Rhubarb viseme data (${rhubarbResponse.status}): ${paths.rhubarb}`);
-                rhubarbData = await rhubarbResponse.json();
-                console.log('Loaded Rhubarb viseme data:', rhubarbData);
-                
-                // Load WhisperX data
-                const whisperxResponse = await fetch(paths.whisperx);
-                if (!whisperxResponse.ok) throw new Error(`Failed to load WhisperX viseme data (${whisperxResponse.status}): ${paths.whisperx}`);
-                whisperxData = await whisperxResponse.json();
-                console.log('Loaded WhisperX viseme data:', whisperxData);
-                
                 // Load Gentle data
                 const gentleResponse = await fetch(paths.gentle);
                 if (!gentleResponse.ok) throw new Error(`Failed to load Gentle viseme data (${gentleResponse.status}): ${paths.gentle}`);
                 gentleData = await gentleResponse.json();
                 console.log('Loaded Gentle viseme data:', gentleData);
-                
-                // Load Hybrid data
-                const hybridResponse = await fetch(paths.hybrid);
-                if (!hybridResponse.ok) throw new Error(`Failed to load Hybrid viseme data (${hybridResponse.status}): ${paths.hybrid}`);
-                hybridData = await hybridResponse.json();
-                console.log('Loaded Hybrid viseme data:', hybridData);
             } catch (error) {
                 console.error('Error loading viseme data:', error);
                 showError('Failed to load viseme data: ' + error.message);
@@ -492,12 +450,8 @@
             const adjustedTime = currentTime + (anticipationTime / 1000);
             const character = characterSelect.value;
             
-            // Get the selected model's data
-            const selectedModel = lipSyncModelSelect.value;
-            const visemeData = selectedModel === 'rhubarb' ? rhubarbData : 
-                              selectedModel === 'whisperx' ? whisperxData : 
-                              selectedModel === 'gentle' ? gentleData :
-                              hybridData;
+            // Get the selected model's data (only gentle now)
+            const visemeData = gentleData;
 
             if (visemeData) {
                 const cue = visemeData.mouthCues.find(cue => {
@@ -538,7 +492,7 @@
 
         // Play audio and start animation
         async function playAudio() {
-            if (!rhubarbData || !whisperxData || !gentleData || !hybridData) {
+            if (!gentleData) {
                 showError('Viseme data not loaded');
                 return;
             }
@@ -744,12 +698,8 @@
             // Clear existing markers
             phonemeMarkersContainer.innerHTML = '';
             
-            // Get the selected model's data
-            const selectedModel = lipSyncModelSelect.value;
-            const visemeData = selectedModel === 'rhubarb' ? rhubarbData : 
-                              selectedModel === 'whisperx' ? whisperxData : 
-                              selectedModel === 'gentle' ? gentleData :
-                              hybridData;
+            // Get the selected model's data (only gentle now)
+            const visemeData = gentleData;
             
             if (!visemeData || !visemeData.mouthCues) return;
             
@@ -844,11 +794,7 @@
             }
             
             // Highlight active phoneme marker using adjusted times
-            const selectedModel = lipSyncModelSelect.value;
-            const visemeData = selectedModel === 'rhubarb' ? rhubarbData : 
-                              selectedModel === 'whisperx' ? whisperxData : 
-                              selectedModel === 'gentle' ? gentleData :
-                              hybridData;
+            const visemeData = gentleData;
             
             if (visemeData) {
                 const markers = phonemeMarkersContainer.querySelectorAll('.phoneme-marker');
