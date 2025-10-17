@@ -305,6 +305,7 @@ h1 {
     align-items: center;
     justify-content: center;
     border-radius: 16px;
+    position: relative;
 }
 
 .mouth-container img,
@@ -317,6 +318,11 @@ h1 {
 /* Smooth transitions for SVG morphing */
 #daxSvg #beak-path {
     /* Will-change hint for smoother animations */
+    will-change: d;
+}
+
+/* Eye blinking animations - paths will be morphed via JavaScript */
+#eye-left, #eye-right, #eye-left-iris, #eye-right-iris, #eye-brow-left, #eye-brow-right {
     will-change: d;
 }
 
